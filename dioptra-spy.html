@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dioptra Spy</title>
+
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📍</text></svg>"
+    />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"
+    />
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"
+    />
+
+    <style>
+      :root {
+        --header-height: 50px;
+        --sidebar-width: 320px;
+        --bg-color: #f8f9fa;
+        --border-color: #dee2e6;
+        --text-color: #212529;
+        --primary-color: #0d6efd;
+        --white: #fff;
+        --shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+        --tran-speed: 0.3s;
+      }
+      body,
+      html {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        width: 100%;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        overflow: hidden;
+        background-color: var(--bg-color);
+      }
+      #header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: var(--header-height);
+        background: var(--white);
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 20px;
+        box-sizing: border-box;
+        z-index: 1001;
+      }
+      #sidebar {
+        position: fixed;
+        top: var(--header-height);
+        left: 0;
+        width: var(--sidebar-width);
+        height: calc(100% - var(--header-height));
+        background: var(--white);
+        border-right: 1px solid var(--border-color);
+        z-index: 1000;
+        transform: translateX(calc(-1 * var(--sidebar-width)));
+        transition: transform var(--tran-speed) ease;
+        display: flex;
+        flex-direction: column;
+      }
+      #sidebar.open {
+        transform: translateX(0);
+      }
+      #main-content {
+        width: 100%;
+        height: 100%;
+        padding-top: var(--header-height);
+        box-sizing: border-box;
+        position: relative;
+        transition: padding-left var(--tran-speed) ease;
+      }
+      #sidebar.open ~ #main-content {
+        padding-left: var(--sidebar-width);
+      }
+      #map {
+        height: 100%;
+        width: 100%;
+      }
+      #map.pin-drop-mode {
+        cursor: crosshair;
+      }
+      .header-left,
+      .header-right {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+      .logo {
+        font-size: 1.2rem;
+        font-weight: 600;
+      }
+      .logo span {
+        color: var(--primary-color);
+      }
+      .icon-button {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 5px;
+        border-radius: 50%;
+        display: inline-flex;
+        transition: background-color 0.2s;
+      }
+      .icon-button:hover {
+        background-color: var(--border-color);
+      }
+      .material-symbols-outlined {
+        vertical-align: middle;
+        font-size: 20px;
+      }
+      .action-button {
+        background-color: var(--bg-color);
+        border: 1px solid var(--border-color);
+        padding: 6px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        transition: background-color 0.2s;
+      }
+      .action-button:hover {
+        background-color: #e2e6ea;
+      }
+      .sidebar-section {
+        padding: 15px;
+        border-bottom: 1px solid var(--border-color);
+      }
+      .sidebar-section h3 {
+        margin: 0 0 10px 0;
+        font-size: 1rem;
+      }
+      .image-list-container {
+        flex-grow: 1;
+        overflow-y: auto;
+        max-height: 25vh;
+      }
+      .image-list-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+      .image-list-item:hover {
+        background-color: var(--bg-color);
+      }
+      .image-list-item img {
+        width: 40px;
+        height: 40px;
+        object-fit: cover;
+        border-radius: 4px;
+      }
+      .image-list-item .info {
+        font-size: 13px;
+        line-height: 1.3;
+        overflow: hidden;
+        flex-grow: 1;
+      }
+      .image-list-item .filename {
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .image-list-item .details {
+        font-size: 11px;
+        color: #6c757d;
+      }
+      .locate-button {
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 4px 8px;
+        font-size: 11px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+      .locate-button:hover {
+        background-color: #0b5ed7;
+      }
+      #analyst-notes {
+        width: 100%;
+        height: 150px;
+        box-sizing: border-box;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 10px;
+        font-family: inherit;
+        font-size: 14px;
+        resize: vertical;
+      }
+      .leaflet-popup-content img {
+        max-width: 180px;
+        border-radius: 4px;
+        margin-top: 5px;
+      }
+      .leaflet-popup-content small {
+        color: #6c757d;
+        word-break: break-all;
+      }
+      .user-message {
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1002;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        font-size: 14px;
+        text-align: center;
+        max-width: 80%;
+      }
+      .user-message.error {
+        background: rgba(220, 53, 69, 0.9);
+      }
+      .user-message.info {
+        background: rgba(13, 110, 253, 0.9);
+      }
+      .user-message code {
+        background: rgba(0, 0, 0, 0.2);
+        padding: 2px 5px;
+        border-radius: 3px;
+      }
+      #drop-zone {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 123, 255, 0.1);
+        border: 3px dashed var(--primary-color);
+        z-index: 9999;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        pointer-events: none;
+      }
+      #drop-zone.visible {
+        display: flex;
+      }
+      #drop-zone-text {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--primary-color);
+        background: rgba(255, 255, 255, 0.8);
+        padding: 20px 40px;
+        border-radius: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <header id="header">
+      <div class="header-left">
+        <button id="sidebar-toggle" class="icon-button" title="Toggle Sidebar">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+        <div class="logo">Dioptra<span>Spy</span></div>
+      </div>
+      <div class="header-right">
+        <button class="action-button" id="save-session-btn">
+          <span class="material-symbols-outlined">save</span> Save
+        </button>
+        <button class="action-button" id="load-session-btn">
+          <span class="material-symbols-outlined">folder_open</span> Load
+        </button>
+      </div>
+    </header>
+
+    <aside id="sidebar">
+      <div class="sidebar-section">
+        <h3>Geolocated Images</h3>
+        <div id="geolocated-list" class="image-list-container"></div>
+      </div>
+      <div class="sidebar-section">
+        <h3>Unlocated Images</h3>
+        <div id="unlocated-list" class="image-list-container"></div>
+      </div>
+      <div class="sidebar-section">
+        <h3>Analyst Notes</h3>
+        <textarea
+          id="analyst-notes"
+          placeholder="Enter your notes for this session..."
+        ></textarea>
+      </div>
+    </aside>
+
+    <main id="main-content">
+      <div id="map"></div>
+      <div id="drop-zone"><div id="drop-zone-text">Drop Images Here</div></div>
+    </main>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        let currentImageData = [];
+        let itemPendingPlacement = null;
+
+        const ui = {
+          sidebar: document.getElementById("sidebar"),
+          sidebarToggle: document.getElementById("sidebar-toggle"),
+          saveBtn: document.getElementById("save-session-btn"),
+          loadBtn: document.getElementById("load-session-btn"),
+          geolocatedList: document.getElementById("geolocated-list"),
+          unlocatedList: document.getElementById("unlocated-list"),
+          analystNotes: document.getElementById("analyst-notes"),
+          dropZone: document.getElementById("drop-zone"),
+          mainContent: document.getElementById("main-content"),
+          map: document.getElementById("map"),
+        };
+
+        ui.sidebarToggle.addEventListener("click", () => {
+          ui.sidebar.classList.toggle("open");
+          ui.mainContent.style.paddingLeft = ui.sidebar.classList.contains(
+            "open"
+          )
+            ? "var(--sidebar-width)"
+            : "0";
+        });
+        ui.saveBtn.addEventListener("click", saveSession);
+        ui.loadBtn.addEventListener("click", loadSession);
+
+        const map = L.map(ui.map, { zoomControl: false }).setView([20, 0], 2);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: "&copy; OpenStreetMap",
+        }).addTo(map);
+        L.control.zoom({ position: "bottomright" }).addTo(map);
+        const markersLayer = L.markerClusterGroup();
+        map.addLayer(markersLayer);
+        ui.sidebar.addEventListener("transitionend", () =>
+          map.invalidateSize()
+        );
+
+        ui.mainContent.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          ui.dropZone.classList.add("visible");
+        });
+        ui.mainContent.addEventListener("dragleave", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (
+            e.relatedTarget === null ||
+            !ui.mainContent.contains(e.relatedTarget)
+          ) {
+            ui.dropZone.classList.remove("visible");
+          }
+        });
+        ui.mainContent.addEventListener("drop", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          ui.dropZone.classList.remove("visible");
+          if (e.dataTransfer.files.length > 0)
+            processFiles(e.dataTransfer.files);
+        });
+
+        async function processFiles(files) {
+          const geolocatedFiles = [];
+          const unlocatedFiles = [];
+
+          for (const file of files) {
+            if (!file.type.startsWith("image/")) continue;
+
+            const newImageBase = {
+              id: Date.now() + Math.random(),
+              original_path: file.name,
+              datetime: "N/A",
+              model: "N/A",
+              thumbnail_rel_path: await createThumbnail(file),
+            };
+
+            try {
+              const tags = await getExifData(file);
+              const gps = getGpsData(tags);
+              currentImageData.push({
+                ...newImageBase,
+                latitude: gps.lat,
+                longitude: gps.lon,
+                datetime: tags.DateTimeOriginal || "N/A",
+                model: tags.Model || "N/A",
+              });
+              geolocatedFiles.push(file.name);
+            } catch (error) {
+              currentImageData.push({
+                ...newImageBase,
+                latitude: null,
+                longitude: null,
+              });
+              unlocatedFiles.push(file.name);
+            }
+          }
+
+          let message = `Processed ${files.length} file(s). `;
+          if (geolocatedFiles.length > 0)
+            message += `${geolocatedFiles.length} geolocated. `;
+          if (unlocatedFiles.length > 0)
+            message += `${unlocatedFiles.length} sent to 'Unlocated'.`;
+          displayMessage(message, "info");
+
+          updateUI();
+        }
+
+        function updateUI() {
+          populateMap(currentImageData);
+          populateSidebar(currentImageData);
+        }
+
+        function populateMap(imageData) {
+          markersLayer.clearLayers();
+          const geolocated = imageData.filter(
+            (item) => item.latitude !== null && item.longitude !== null
+          );
+
+          geolocated.forEach((item) => {
+            const popupContent = `<b>Date:</b> ${item.datetime}<br><b>Model:</b> ${item.model}<br><a href="https://www.google.com/maps?q=${item.latitude},${item.longitude}" target="_blank">Open in Google Maps</a><hr><img src="${item.thumbnail_rel_path}" alt="Thumbnail"><br><small><i>${item.original_path}</i></small>`;
+            const marker = L.marker([item.latitude, item.longitude], {
+              draggable: true,
+            }).bindPopup(popupContent);
+
+            marker.on("dragstart", function (event) {
+              this._originalLatLng = event.target.getLatLng();
+            });
+
+            marker.on("dragend", function (event) {
+              const marker = event.target;
+              const originalPos = this._originalLatLng;
+              const newPos = marker.getLatLng();
+
+              const confirmation = window.confirm(
+                `Are you sure you want to move this pin?\n\nOld: ${originalPos.lat.toFixed(
+                  5
+                )}, ${originalPos.lng.toFixed(5)}\nNew: ${newPos.lat.toFixed(
+                  5
+                )}, ${newPos.lng.toFixed(5)}`
+              );
+
+              if (confirmation) {
+                item.latitude = newPos.lat;
+                item.longitude = newPos.lng;
+                displayMessage(
+                  `Updated location for ${item.original_path
+                    .split(/[\\/]/)
+                    .pop()}.`,
+                  "info"
+                );
+              } else {
+                marker.setLatLng(originalPos);
+              }
+            });
+
+            item.marker = marker;
+            markersLayer.addLayer(marker);
+          });
+
+          if (geolocated.length > 0) {
+            map.fitBounds(markersLayer.getBounds(), { padding: [50, 50] });
+          }
+        }
+
+        function populateSidebar(imageData) {
+          ui.geolocatedList.innerHTML = "";
+          ui.unlocatedList.innerHTML = "";
+
+          const sortedData = [...imageData].sort((a, b) => {
+            if (a.latitude === null && b.latitude !== null) return -1;
+            if (a.latitude !== null && b.latitude === null) return 1;
+            return a.original_path.localeCompare(b.original_path);
+          });
+
+          sortedData.forEach((item) => {
+            const listItem = document.createElement("div");
+            listItem.className = "image-list-item";
+            const fileName = item.original_path.split(/[\\/]/).pop();
+
+            if (item.latitude !== null) {
+              listItem.innerHTML = `<img src="${item.thumbnail_rel_path}" alt="thumb"><div class="info"><div class="filename">${fileName}</div><div class="details">${item.datetime}</div></div>`;
+              listItem.addEventListener("click", () => {
+                if (item.marker) {
+                  markersLayer.zoomToShowLayer(item.marker, () => {
+                    item.marker.openPopup();
+                  });
+                }
+              });
+              ui.geolocatedList.appendChild(listItem);
+            } else {
+              listItem.innerHTML = `<img src="${item.thumbnail_rel_path}" alt="thumb"><div class="info"><div class="filename">${fileName}</div></div><button class="locate-button">Locate</button>`;
+              listItem
+                .querySelector(".locate-button")
+                .addEventListener("click", (e) => {
+                  e.stopPropagation();
+                  startPinDrop(item.id);
+                });
+              ui.unlocatedList.appendChild(listItem);
+            }
+          });
+        }
+
+        function startPinDrop(itemId) {
+          if (itemPendingPlacement) {
+            displayMessage(
+              "Already in pin-drop mode. Cancel or place the current pin first.",
+              "info"
+            );
+            return;
+          }
+          itemPendingPlacement = currentImageData.find(
+            (item) => item.id === itemId
+          );
+          if (!itemPendingPlacement) return;
+
+          ui.map.classList.add("pin-drop-mode");
+          displayMessage(
+            "Click on the map to place the image pin. Press ESC to cancel.",
+            "info"
+          );
+
+          map.once("click", handlePinDrop);
+          document.addEventListener("keydown", cancelPinDropOnEsc);
+        }
+
+        function handlePinDrop(e) {
+          if (!itemPendingPlacement) return;
+          const { lat, lng } = e.latlng;
+          itemPendingPlacement.latitude = lat;
+          itemPendingPlacement.longitude = lng;
+          finishPinDrop(`Image pin placed successfully.`);
+        }
+
+        function cancelPinDropOnEsc(e) {
+          if (e.key === "Escape") {
+            finishPinDrop("Pin placement cancelled.");
+          }
+        }
+
+        function finishPinDrop(message) {
+          ui.map.classList.remove("pin-drop-mode");
+          displayMessage(message, "info");
+          itemPendingPlacement = null;
+          map.off("click", handlePinDrop);
+          document.removeEventListener("keydown", cancelPinDropOnEsc);
+          updateUI();
+        }
+
+        function saveSession() {
+          const sessionData = {
+            version: "1.0",
+            createdAt: new Date().toISOString(),
+            imageData: currentImageData.map(({ marker, ...rest }) => rest),
+            analystNotes: ui.analystNotes.value,
+          };
+          const dataStr = JSON.stringify(sessionData, null, 2);
+          const blob = new Blob([dataStr], { type: "application/json" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `dioptra-case-${new Date()
+            .toISOString()
+            .slice(0, 10)}.json`;
+          a.click();
+          URL.revokeObjectURL(url);
+          displayMessage("Session saved successfully!", "info");
+        }
+
+        function loadSession() {
+          const input = document.createElement("input");
+          input.type = "file";
+          input.accept = ".json";
+          input.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+              try {
+                const data = JSON.parse(event.target.result);
+                if (!data.imageData) throw new Error("Invalid session file.");
+                loadSessionData(data);
+                displayMessage("Session loaded successfully!", "info");
+              } catch (err) {
+                displayMessage(
+                  "Error: Could not read or parse the session file.",
+                  "error"
+                );
+              }
+            };
+            reader.readAsText(file);
+          };
+          input.click();
+        }
+
+        function loadSessionData(sessionData) {
+          currentImageData = sessionData.imageData;
+          ui.analystNotes.value = sessionData.analystNotes || "";
+          updateUI();
+        }
+
+        async function loadInitialData() {
+          try {
+            const response = await fetch("output/data.json");
+            if (response.ok) {
+              const data = await response.json();
+              loadSessionData({
+                imageData: data.map((item) => ({
+                  ...item,
+                  id: Date.now() + Math.random(),
+                })),
+                analystNotes: "",
+              });
+            } else {
+              throw new Error("No initial data file.");
+            }
+          } catch (error) {
+            displayMessage(
+              "Ready. Drag images onto the map or load a session file.",
+              "info"
+            );
+          }
+        }
+
+        function displayMessage(message, type = "info", duration = 4000) {
+          const existingMsg = document.querySelector(".user-message");
+          if (existingMsg) existingMsg.remove();
+          const msgDiv = document.createElement("div");
+          msgDiv.className = `user-message ${type}`;
+          msgDiv.innerHTML = message;
+          ui.mainContent.appendChild(msgDiv);
+          setTimeout(() => {
+            msgDiv.remove();
+          }, duration);
+        }
+
+        function getExifData(file) {
+          return new Promise((resolve, reject) => {
+            EXIF.getData(file, function () {
+              const tags = EXIF.getAllTags(this);
+              if (Object.keys(tags).length === 0) {
+                reject(new Error("No EXIF data."));
+              } else {
+                resolve(tags);
+              }
+            });
+          });
+        }
+        function getGpsData(tags) {
+          if (!tags.GPSLatitude || !tags.GPSLongitude) {
+            throw new Error("GPS data not found.");
+          }
+          const latRef = tags.GPSLatitudeRef || "N";
+          const lonRef = tags.GPSLongitudeRef || "E";
+          const lat =
+            (tags.GPSLatitude[0] +
+              tags.GPSLatitude[1] / 60 +
+              tags.GPSLatitude[2] / 3600) *
+            (latRef === "N" ? 1 : -1);
+          const lon =
+            (tags.GPSLongitude[0] +
+              tags.GPSLongitude[1] / 60 +
+              tags.GPSLongitude[2] / 3600) *
+            (lonRef === "E" ? 1 : -1);
+          return { lat, lon };
+        }
+        function createThumbnail(file, maxWidth = 200, maxHeight = 200) {
+          return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              const img = new Image();
+              img.onload = () => {
+                const canvas = document.createElement("canvas");
+                let { width, height } = img;
+                if (width > height) {
+                  if (width > maxWidth) {
+                    height *= maxWidth / width;
+                    width = maxWidth;
+                  }
+                } else {
+                  if (height > maxHeight) {
+                    width *= maxHeight / height;
+                    height = maxHeight;
+                  }
+                }
+                canvas.width = width;
+                canvas.height = height;
+                canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+                resolve(canvas.toDataURL("image/jpeg"));
+              };
+              img.onerror = reject;
+              img.src = e.target.result;
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          });
+        }
+
+        loadInitialData();
+      });
+    </script>
+  </body>
+</html>

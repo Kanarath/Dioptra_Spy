@@ -1,0 +1,5 @@
+para poder probarlo tienes que hacer en bash:
+python -m http.server
+
+y luego en el navegador poner:
+http://localhost:8000/dioptra-spy.html

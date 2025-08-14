@@ -1,0 +1,74 @@
+[
+  {
+    "original_path": "C:\\Users\\User\\Desktop\\Dioptra_Spy\\input_images\\test1.jpg",
+    "thumbnail_rel_path": "output/thumbnails/test1_thumb.jpg",
+    "latitude": 40.74841666666667,
+    "longitude": -73.98597222222223,
+    "datetime": "2023:10:27 10:30:00",
+    "model": "TestCamera S1"
+  },
+  {
+    "original_path": "C:\\Users\\User\\Desktop\\Dioptra_Spy\\input_images\\test2.jpg",
+    "thumbnail_rel_path": "output/thumbnails/test2_thumb.jpg",
+    "latitude": 40.76841666666667,
+    "longitude": -73.97541666666667,
+    "datetime": "2023:10:27 10:35:00",
+    "model": "TestCamera S2"
+  },
+  {
+    "original_path": "C:\\Users\\User\\Desktop\\Dioptra_Spy\\input_images\\test3.jpg",
+    "thumbnail_rel_path": "output/thumbnails/test3_thumb.jpg",
+    "latitude": 40.733361111111115,
+    "longitude": -73.95541666666666,
+    "datetime": "2023:10:27 10:40:00",
+    "model": "TestCamera S3"
+  },
+  {
+    "original_path": "C:\\Users\\User\\Desktop\\Dioptra_Spy\\input_images\\test4.jpg",
+    "thumbnail_rel_path": "output/thumbnails/test4_thumb.jpg",
+    "latitude": 40.778416666666665,
+    "longitude": -74.00541666666666,
+    "datetime": "2023:10:27 10:45:00",
+    "model": "TestCamera S4"
+  },
+  {
+    "original_path": "C:\\Users\\User\\Desktop\\Dioptra_Spy\\input_images\\test5.jpg",
+    "thumbnail_rel_path": "output/thumbnails/test5_thumb.jpg",
+    "latitude": 40.723416666666665,
+    "longitude": -73.99041666666666,
+    "datetime": "2023:10:27 10:50:00",
+    "model": "TestCamera S5"
+  },
+  {
+    "original_path": "C:\\Users\\User\\Desktop\\Dioptra_Spy\\input_images\\test6.jpg",
+    "thumbnail_rel_path": "output/thumbnails/test6_thumb.jpg",
+    "latitude": 40.75841666666667,
+    "longitude": -73.96041666666667,
+    "datetime": "2023:10:27 10:55:00",
+    "model": "TestCamera S6"
+  },
+  {
+    "original_path": "C:\\Users\\User\\Desktop\\Dioptra_Spy\\input_images\\test7.jpg",
+    "thumbnail_rel_path": "output/thumbnails/test7_thumb.jpg",
+    "latitude": 40.71841666666667,
+    "longitude": -74.01541666666667,
+    "datetime": "2023:10:27 11:00:00",
+    "model": "TestCamera S7"
+  },
+  {
+    "original_path": "C:\\Users\\User\\Desktop\\Dioptra_Spy\\input_images\\test8.jpg",
+    "thumbnail_rel_path": "output/thumbnails/test8_thumb.jpg",
+    "latitude": 40.77341666666666,
+    "longitude": -74.00041666666667,
+    "datetime": "2023:10:27 11:05:00",
+    "model": "TestCamera S8"
+  },
+  {
+    "original_path": "C:\\Users\\User\\Desktop\\Dioptra_Spy\\input_images\\test9.jpg",
+    "thumbnail_rel_path": "output/thumbnails/test9_thumb.jpg",
+    "latitude": 40.74341666666667,
+    "longitude": -74.02541666666667,
+    "datetime": "2023:10:27 11:10:00",
+    "model": "TestCamera S9"
+  }
+]
