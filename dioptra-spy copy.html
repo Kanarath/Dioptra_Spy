@@ -22,6 +22,7 @@
       rel="stylesheet"
       href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"
     />
+    <!-- ***** THIS LINE IS NOW CORRECTED ***** -->
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
     <link
@@ -206,17 +207,6 @@
       .locate-button:hover {
         background-color: #0b5ed7;
       }
-      #analyst-notes {
-        width: 100%;
-        height: 150px;
-        box-sizing: border-box;
-        border: 1px solid var(--border-color);
-        border-radius: 6px;
-        padding: 10px;
-        font-family: inherit;
-        font-size: 14px;
-        resize: vertical;
-      }
       .leaflet-popup-content img {
         max-width: 180px;
         border-radius: 4px;
@@ -277,6 +267,49 @@
         padding: 20px 40px;
         border-radius: 12px;
       }
+      #note-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 2000;
+        display: none;
+        align-items: center;
+        justify-content: center;
+      }
+      #note-modal-overlay.visible {
+        display: flex;
+      }
+      .note-modal-content {
+        background: var(--white);
+        padding: 25px;
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        width: 90%;
+        max-width: 500px;
+      }
+      .note-modal-content h3 {
+        margin: 0 0 15px 0;
+      }
+      #note-editor-textarea {
+        width: 100%;
+        height: 150px;
+        box-sizing: border-box;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 10px;
+        font-family: inherit;
+        font-size: 14px;
+        resize: vertical;
+        margin-bottom: 15px;
+      }
+      .note-modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+      }
     </style>
   </head>
   <body>
@@ -306,19 +339,26 @@
         <h3>Unlocated Images</h3>
         <div id="unlocated-list" class="image-list-container"></div>
       </div>
-      <div class="sidebar-section">
-        <h3>Analyst Notes</h3>
-        <textarea
-          id="analyst-notes"
-          placeholder="Enter your notes for this session..."
-        ></textarea>
-      </div>
     </aside>
 
     <main id="main-content">
       <div id="map"></div>
       <div id="drop-zone"><div id="drop-zone-text">Drop Images Here</div></div>
     </main>
+
+    <div id="note-modal-overlay">
+      <div class="note-modal-content">
+        <h3 id="note-modal-title">Edit Note for...</h3>
+        <textarea
+          id="note-editor-textarea"
+          placeholder="Enter notes for this pin..."
+        ></textarea>
+        <div class="note-modal-actions">
+          <button id="note-cancel-btn" class="action-button">Cancel</button>
+          <button id="note-save-btn" class="action-button">Save Note</button>
+        </div>
+      </div>
+    </div>
 
     <script>
       document.addEventListener("DOMContentLoaded", function () {
@@ -332,10 +372,14 @@
           loadBtn: document.getElementById("load-session-btn"),
           geolocatedList: document.getElementById("geolocated-list"),
           unlocatedList: document.getElementById("unlocated-list"),
-          analystNotes: document.getElementById("analyst-notes"),
           dropZone: document.getElementById("drop-zone"),
           mainContent: document.getElementById("main-content"),
           map: document.getElementById("map"),
+          noteModal: document.getElementById("note-modal-overlay"),
+          noteModalTitle: document.getElementById("note-modal-title"),
+          noteTextarea: document.getElementById("note-editor-textarea"),
+          noteSaveBtn: document.getElementById("note-save-btn"),
+          noteCancelBtn: document.getElementById("note-cancel-btn"),
         };
 
         ui.sidebarToggle.addEventListener("click", () => {
@@ -383,21 +427,28 @@
             processFiles(e.dataTransfer.files);
         });
 
+        document.body.addEventListener("click", (e) => {
+          if (e.target.classList.contains("edit-note-btn")) {
+            const imageId = parseFloat(e.target.dataset.imageId);
+            openNoteEditor(imageId);
+          }
+        });
+        ui.noteSaveBtn.addEventListener("click", saveNote);
+        ui.noteCancelBtn.addEventListener("click", closeNoteEditor);
+
         async function processFiles(files) {
           const geolocatedFiles = [];
           const unlocatedFiles = [];
-
           for (const file of files) {
             if (!file.type.startsWith("image/")) continue;
-
             const newImageBase = {
               id: Date.now() + Math.random(),
+              notes: "",
               original_path: file.name,
               datetime: "N/A",
               model: "N/A",
               thumbnail_rel_path: await createThumbnail(file),
             };
-
             try {
               const tags = await getExifData(file);
               const gps = getGpsData(tags);
@@ -418,14 +469,12 @@
               unlocatedFiles.push(file.name);
             }
           }
-
           let message = `Processed ${files.length} file(s). `;
           if (geolocatedFiles.length > 0)
             message += `${geolocatedFiles.length} geolocated. `;
           if (unlocatedFiles.length > 0)
             message += `${unlocatedFiles.length} sent to 'Unlocated'.`;
           displayMessage(message, "info");
-
           updateUI();
         }
 
@@ -439,22 +488,22 @@
           const geolocated = imageData.filter(
             (item) => item.latitude !== null && item.longitude !== null
           );
-
           geolocated.forEach((item) => {
-            const popupContent = `<b>Date:</b> ${item.datetime}<br><b>Model:</b> ${item.model}<br><a href="https://www.google.com/maps?q=${item.latitude},${item.longitude}" target="_blank">Open in Google Maps</a><hr><img src="${item.thumbnail_rel_path}" alt="Thumbnail"><br><small><i>${item.original_path}</i></small>`;
+            const fileName = item.original_path.split(/[\\/]/).pop();
+            const noteDisplay = item.notes
+              ? item.notes.replace(/\n/g, "<br>")
+              : "<i>No notes yet.</i>";
+            const popupContent = `<b>${fileName}</b><hr><b>Date:</b> ${item.datetime}<br><b>Model:</b> ${item.model}<br><a href="https://www.google.com/maps?q=${item.latitude},${item.longitude}" target="_blank">Open in Google Maps</a><hr><b>Notes:</b><br><div class="popup-note">${noteDisplay}</div><button class="edit-note-btn" data-image-id="${item.id}">Edit Note</button><hr><img src="${item.thumbnail_rel_path}" alt="Thumbnail">`;
             const marker = L.marker([item.latitude, item.longitude], {
               draggable: true,
             }).bindPopup(popupContent);
-
             marker.on("dragstart", function (event) {
               this._originalLatLng = event.target.getLatLng();
             });
-
             marker.on("dragend", function (event) {
-              const marker = event.target;
-              const originalPos = this._originalLatLng;
-              const newPos = marker.getLatLng();
-
+              const marker = event.target,
+                originalPos = this._originalLatLng,
+                newPos = marker.getLatLng();
               const confirmation = window.confirm(
                 `Are you sure you want to move this pin?\n\nOld: ${originalPos.lat.toFixed(
                   5
@@ -462,45 +511,33 @@
                   5
                 )}, ${newPos.lng.toFixed(5)}`
               );
-
               if (confirmation) {
                 item.latitude = newPos.lat;
                 item.longitude = newPos.lng;
-                displayMessage(
-                  `Updated location for ${item.original_path
-                    .split(/[\\/]/)
-                    .pop()}.`,
-                  "info"
-                );
+                displayMessage(`Updated location for ${fileName}.`, "info");
               } else {
                 marker.setLatLng(originalPos);
               }
             });
-
             item.marker = marker;
             markersLayer.addLayer(marker);
           });
-
-          if (geolocated.length > 0) {
+          if (geolocated.length > 0)
             map.fitBounds(markersLayer.getBounds(), { padding: [50, 50] });
-          }
         }
 
         function populateSidebar(imageData) {
           ui.geolocatedList.innerHTML = "";
           ui.unlocatedList.innerHTML = "";
-
           const sortedData = [...imageData].sort((a, b) => {
             if (a.latitude === null && b.latitude !== null) return -1;
             if (a.latitude !== null && b.latitude === null) return 1;
             return a.original_path.localeCompare(b.original_path);
           });
-
           sortedData.forEach((item) => {
             const listItem = document.createElement("div");
             listItem.className = "image-list-item";
             const fileName = item.original_path.split(/[\\/]/).pop();
-
             if (item.latitude !== null) {
               listItem.innerHTML = `<img src="${item.thumbnail_rel_path}" alt="thumb"><div class="info"><div class="filename">${fileName}</div><div class="details">${item.datetime}</div></div>`;
               listItem.addEventListener("click", () => {
@@ -524,43 +561,57 @@
           });
         }
 
+        function openNoteEditor(imageId) {
+          const item = currentImageData.find((i) => i.id === imageId);
+          if (!item) return;
+          const fileName = item.original_path.split(/[\\/]/).pop();
+          ui.noteModalTitle.textContent = `Edit Note for ${fileName}`;
+          ui.noteTextarea.value = item.notes || "";
+          ui.noteModal.dataset.editingImageId = imageId;
+          ui.noteModal.classList.add("visible");
+          ui.noteTextarea.focus();
+        }
+        function closeNoteEditor() {
+          ui.noteModal.classList.remove("visible");
+        }
+        function saveNote() {
+          const imageId = parseFloat(ui.noteModal.dataset.editingImageId);
+          const item = currentImageData.find((i) => i.id === imageId);
+          if (item) {
+            item.notes = ui.noteTextarea.value;
+            updateUI();
+            displayMessage("Note saved.", "info");
+          }
+          closeNoteEditor();
+        }
         function startPinDrop(itemId) {
           if (itemPendingPlacement) {
-            displayMessage(
-              "Already in pin-drop mode. Cancel or place the current pin first.",
-              "info"
-            );
+            displayMessage("Already in pin-drop mode.", "info");
             return;
           }
           itemPendingPlacement = currentImageData.find(
             (item) => item.id === itemId
           );
           if (!itemPendingPlacement) return;
-
           ui.map.classList.add("pin-drop-mode");
           displayMessage(
-            "Click on the map to place the image pin. Press ESC to cancel.",
+            "Click map to place pin. Press ESC to cancel.",
             "info"
           );
-
           map.once("click", handlePinDrop);
           document.addEventListener("keydown", cancelPinDropOnEsc);
         }
-
         function handlePinDrop(e) {
           if (!itemPendingPlacement) return;
-          const { lat, lng } = e.latlng;
-          itemPendingPlacement.latitude = lat;
-          itemPendingPlacement.longitude = lng;
-          finishPinDrop(`Image pin placed successfully.`);
+          itemPendingPlacement.latitude = e.latlng.lat;
+          itemPendingPlacement.longitude = e.latlng.lng;
+          finishPinDrop(`Image pin placed.`);
         }
-
         function cancelPinDropOnEsc(e) {
           if (e.key === "Escape") {
             finishPinDrop("Pin placement cancelled.");
           }
         }
-
         function finishPinDrop(message) {
           ui.map.classList.remove("pin-drop-mode");
           displayMessage(message, "info");
@@ -569,13 +620,12 @@
           document.removeEventListener("keydown", cancelPinDropOnEsc);
           updateUI();
         }
-
         function saveSession() {
           const sessionData = {
             version: "1.0",
             createdAt: new Date().toISOString(),
             imageData: currentImageData.map(({ marker, ...rest }) => rest),
-            analystNotes: ui.analystNotes.value,
+            analystNotes: "",
           };
           const dataStr = JSON.stringify(sessionData, null, 2);
           const blob = new Blob([dataStr], { type: "application/json" });
@@ -587,9 +637,8 @@
             .slice(0, 10)}.json`;
           a.click();
           URL.revokeObjectURL(url);
-          displayMessage("Session saved successfully!", "info");
+          displayMessage("Session saved.", "info");
         }
-
         function loadSession() {
           const input = document.createElement("input");
           input.type = "file";
@@ -603,25 +652,22 @@
                 const data = JSON.parse(event.target.result);
                 if (!data.imageData) throw new Error("Invalid session file.");
                 loadSessionData(data);
-                displayMessage("Session loaded successfully!", "info");
+                displayMessage("Session loaded.", "info");
               } catch (err) {
-                displayMessage(
-                  "Error: Could not read or parse the session file.",
-                  "error"
-                );
+                displayMessage("Error reading file.", "error");
               }
             };
             reader.readAsText(file);
           };
           input.click();
         }
-
         function loadSessionData(sessionData) {
-          currentImageData = sessionData.imageData;
-          ui.analystNotes.value = sessionData.analystNotes || "";
+          currentImageData = sessionData.imageData.map((item) => ({
+            ...item,
+            notes: item.notes || "",
+          }));
           updateUI();
         }
-
         async function loadInitialData() {
           try {
             const response = await fetch("output/data.json");
@@ -631,6 +677,7 @@
                 imageData: data.map((item) => ({
                   ...item,
                   id: Date.now() + Math.random(),
+                  notes: "",
                 })),
                 analystNotes: "",
               });
@@ -639,12 +686,11 @@
             }
           } catch (error) {
             displayMessage(
-              "Ready. Drag images onto the map or load a session file.",
+              "Ready. Drag images or load a session file.",
               "info"
             );
           }
         }
-
         function displayMessage(message, type = "info", duration = 4000) {
           const existingMsg = document.querySelector(".user-message");
           if (existingMsg) existingMsg.remove();
@@ -656,7 +702,6 @@
             msgDiv.remove();
           }, duration);
         }
-
         function getExifData(file) {
           return new Promise((resolve, reject) => {
             EXIF.getData(file, function () {
@@ -718,7 +763,6 @@
             reader.readAsDataURL(file);
           });
         }
-
         loadInitialData();
       });
     </script>

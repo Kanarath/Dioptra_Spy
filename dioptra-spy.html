@@ -22,7 +22,6 @@
       rel="stylesheet"
       href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"
     />
-    <!-- ***** THIS LINE IS NOW CORRECTED ***** -->
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
     <link
@@ -158,7 +157,7 @@
       .image-list-container {
         flex-grow: 1;
         overflow-y: auto;
-        max-height: 25vh;
+        max-height: 40vh;
       }
       .image-list-item {
         display: flex;
@@ -267,7 +266,7 @@
         padding: 20px 40px;
         border-radius: 12px;
       }
-      #note-modal-overlay {
+      .modal-overlay {
         position: fixed;
         top: 0;
         left: 0;
@@ -279,10 +278,10 @@
         align-items: center;
         justify-content: center;
       }
-      #note-modal-overlay.visible {
+      .modal-overlay.visible {
         display: flex;
       }
-      .note-modal-content {
+      .modal-content {
         background: var(--white);
         padding: 25px;
         border-radius: 8px;
@@ -290,25 +289,44 @@
         width: 90%;
         max-width: 500px;
       }
-      .note-modal-content h3 {
-        margin: 0 0 15px 0;
+      .modal-content h3 {
+        margin: 0 0 20px 0;
       }
-      #note-editor-textarea {
-        width: 100%;
-        height: 150px;
-        box-sizing: border-box;
-        border: 1px solid var(--border-color);
-        border-radius: 6px;
-        padding: 10px;
-        font-family: inherit;
-        font-size: 14px;
-        resize: vertical;
+      .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
         margin-bottom: 15px;
       }
-      .note-modal-actions {
+      .form-group {
+        display: flex;
+        flex-direction: column;
+      }
+      .form-group.full-width {
+        grid-column: 1 / -1;
+      }
+      .form-group label {
+        margin-bottom: 5px;
+        font-size: 13px;
+        font-weight: 500;
+      }
+      .form-group input,
+      .form-group textarea {
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 8px 10px;
+        font-family: inherit;
+        font-size: 14px;
+      }
+      #details-notes {
+        resize: vertical;
+        min-height: 100px;
+      }
+      .modal-actions {
         display: flex;
         justify-content: flex-end;
         gap: 10px;
+        margin-top: 20px;
       }
     </style>
   </head>
@@ -346,16 +364,47 @@
       <div id="drop-zone"><div id="drop-zone-text">Drop Images Here</div></div>
     </main>
 
-    <div id="note-modal-overlay">
-      <div class="note-modal-content">
-        <h3 id="note-modal-title">Edit Note for...</h3>
-        <textarea
-          id="note-editor-textarea"
-          placeholder="Enter notes for this pin..."
-        ></textarea>
-        <div class="note-modal-actions">
-          <button id="note-cancel-btn" class="action-button">Cancel</button>
-          <button id="note-save-btn" class="action-button">Save Note</button>
+    <div id="details-modal-overlay" class="modal-overlay">
+      <div class="modal-content">
+        <h3 id="details-modal-title">Edit Pin Details</h3>
+        <div class="form-grid">
+          <div class="form-group full-width">
+            <label for="details-title">Custom Title (optional)</label>
+            <input
+              type="text"
+              id="details-title"
+              placeholder="e.g., Main Entrance - North View"
+            />
+          </div>
+          <div class="form-group">
+            <label for="details-datetime">Date/Time</label>
+            <input
+              type="text"
+              id="details-datetime"
+              placeholder="YYYY:MM:DD HH:MM:SS"
+            />
+          </div>
+          <div class="form-group">
+            <label for="details-model">Camera Model</label>
+            <input
+              type="text"
+              id="details-model"
+              placeholder="e.g., iPhone 15 Pro"
+            />
+          </div>
+          <div class="form-group full-width">
+            <label for="details-notes">Notes</label>
+            <textarea
+              id="details-notes"
+              placeholder="Enter notes for this pin..."
+            ></textarea>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button id="details-cancel-btn" class="action-button">Cancel</button>
+          <button id="details-save-btn" class="action-button">
+            Save Details
+          </button>
         </div>
       </div>
     </div>
@@ -375,11 +424,14 @@
           dropZone: document.getElementById("drop-zone"),
           mainContent: document.getElementById("main-content"),
           map: document.getElementById("map"),
-          noteModal: document.getElementById("note-modal-overlay"),
-          noteModalTitle: document.getElementById("note-modal-title"),
-          noteTextarea: document.getElementById("note-editor-textarea"),
-          noteSaveBtn: document.getElementById("note-save-btn"),
-          noteCancelBtn: document.getElementById("note-cancel-btn"),
+          detailsModal: document.getElementById("details-modal-overlay"),
+          detailsModalTitle: document.getElementById("details-modal-title"),
+          detailsTitle: document.getElementById("details-title"),
+          detailsDatetime: document.getElementById("details-datetime"),
+          detailsModel: document.getElementById("details-model"),
+          detailsNotes: document.getElementById("details-notes"),
+          detailsSaveBtn: document.getElementById("details-save-btn"),
+          detailsCancelBtn: document.getElementById("details-cancel-btn"),
         };
 
         ui.sidebarToggle.addEventListener("click", () => {
@@ -428,13 +480,13 @@
         });
 
         document.body.addEventListener("click", (e) => {
-          if (e.target.classList.contains("edit-note-btn")) {
+          if (e.target.classList.contains("edit-details-btn")) {
             const imageId = parseFloat(e.target.dataset.imageId);
-            openNoteEditor(imageId);
+            openDetailsEditor(imageId);
           }
         });
-        ui.noteSaveBtn.addEventListener("click", saveNote);
-        ui.noteCancelBtn.addEventListener("click", closeNoteEditor);
+        ui.detailsSaveBtn.addEventListener("click", saveDetails);
+        ui.detailsCancelBtn.addEventListener("click", closeDetailsEditor);
 
         async function processFiles(files) {
           const geolocatedFiles = [];
@@ -443,6 +495,7 @@
             if (!file.type.startsWith("image/")) continue;
             const newImageBase = {
               id: Date.now() + Math.random(),
+              title: "",
               notes: "",
               original_path: file.name,
               datetime: "N/A",
@@ -489,11 +542,12 @@
             (item) => item.latitude !== null && item.longitude !== null
           );
           geolocated.forEach((item) => {
-            const fileName = item.original_path.split(/[\\/]/).pop();
+            const displayTitle =
+              item.title || item.original_path.split(/[\\/]/).pop();
             const noteDisplay = item.notes
               ? item.notes.replace(/\n/g, "<br>")
               : "<i>No notes yet.</i>";
-            const popupContent = `<b>${fileName}</b><hr><b>Date:</b> ${item.datetime}<br><b>Model:</b> ${item.model}<br><a href="https://www.google.com/maps?q=${item.latitude},${item.longitude}" target="_blank">Open in Google Maps</a><hr><b>Notes:</b><br><div class="popup-note">${noteDisplay}</div><button class="edit-note-btn" data-image-id="${item.id}">Edit Note</button><hr><img src="${item.thumbnail_rel_path}" alt="Thumbnail">`;
+            const popupContent = `<b>${displayTitle}</b><hr><b>Date:</b> ${item.datetime}<br><b>Model:</b> ${item.model}<br><a href="https://www.google.com/maps?q=${item.latitude},${item.longitude}" target="_blank">Open in Google Maps</a><hr><b>Notes:</b><br><div class="popup-note">${noteDisplay}</div><button class="edit-details-btn" data-image-id="${item.id}">Edit Details</button><hr><img src="${item.thumbnail_rel_path}" alt="Thumbnail">`;
             const marker = L.marker([item.latitude, item.longitude], {
               draggable: true,
             }).bindPopup(popupContent);
@@ -514,7 +568,7 @@
               if (confirmation) {
                 item.latitude = newPos.lat;
                 item.longitude = newPos.lng;
-                displayMessage(`Updated location for ${fileName}.`, "info");
+                displayMessage(`Updated location for ${displayTitle}.`, "info");
               } else {
                 marker.setLatLng(originalPos);
               }
@@ -537,9 +591,10 @@
           sortedData.forEach((item) => {
             const listItem = document.createElement("div");
             listItem.className = "image-list-item";
-            const fileName = item.original_path.split(/[\\/]/).pop();
+            const displayTitle =
+              item.title || item.original_path.split(/[\\/]/).pop();
             if (item.latitude !== null) {
-              listItem.innerHTML = `<img src="${item.thumbnail_rel_path}" alt="thumb"><div class="info"><div class="filename">${fileName}</div><div class="details">${item.datetime}</div></div>`;
+              listItem.innerHTML = `<img src="${item.thumbnail_rel_path}" alt="thumb"><div class="info"><div class="filename">${displayTitle}</div><div class="details">${item.datetime}</div></div>`;
               listItem.addEventListener("click", () => {
                 if (item.marker) {
                   markersLayer.zoomToShowLayer(item.marker, () => {
@@ -549,7 +604,7 @@
               });
               ui.geolocatedList.appendChild(listItem);
             } else {
-              listItem.innerHTML = `<img src="${item.thumbnail_rel_path}" alt="thumb"><div class="info"><div class="filename">${fileName}</div></div><button class="locate-button">Locate</button>`;
+              listItem.innerHTML = `<img src="${item.thumbnail_rel_path}" alt="thumb"><div class="info"><div class="filename">${displayTitle}</div></div><button class="locate-button">Locate</button>`;
               listItem
                 .querySelector(".locate-button")
                 .addEventListener("click", (e) => {
@@ -561,29 +616,38 @@
           });
         }
 
-        function openNoteEditor(imageId) {
+        function openDetailsEditor(imageId) {
           const item = currentImageData.find((i) => i.id === imageId);
           if (!item) return;
           const fileName = item.original_path.split(/[\\/]/).pop();
-          ui.noteModalTitle.textContent = `Edit Note for ${fileName}`;
-          ui.noteTextarea.value = item.notes || "";
-          ui.noteModal.dataset.editingImageId = imageId;
-          ui.noteModal.classList.add("visible");
-          ui.noteTextarea.focus();
+          ui.detailsModalTitle.textContent = `Edit Details for ${fileName}`;
+          ui.detailsTitle.value = item.title || "";
+          ui.detailsDatetime.value = item.datetime || "";
+          ui.detailsModel.value = item.model || "";
+          ui.detailsNotes.value = item.notes || "";
+          ui.detailsModal.dataset.editingImageId = imageId;
+          ui.detailsModal.classList.add("visible");
+          ui.detailsTitle.focus();
         }
-        function closeNoteEditor() {
-          ui.noteModal.classList.remove("visible");
+
+        function closeDetailsEditor() {
+          ui.detailsModal.classList.remove("visible");
         }
-        function saveNote() {
-          const imageId = parseFloat(ui.noteModal.dataset.editingImageId);
+
+        function saveDetails() {
+          const imageId = parseFloat(ui.detailsModal.dataset.editingImageId);
           const item = currentImageData.find((i) => i.id === imageId);
           if (item) {
-            item.notes = ui.noteTextarea.value;
+            item.title = ui.detailsTitle.value;
+            item.datetime = ui.detailsDatetime.value;
+            item.model = ui.detailsModel.value;
+            item.notes = ui.detailsNotes.value;
             updateUI();
-            displayMessage("Note saved.", "info");
+            displayMessage("Details saved.", "info");
           }
-          closeNoteEditor();
+          closeDetailsEditor();
         }
+
         function startPinDrop(itemId) {
           if (itemPendingPlacement) {
             displayMessage("Already in pin-drop mode.", "info");
@@ -601,17 +665,20 @@
           map.once("click", handlePinDrop);
           document.addEventListener("keydown", cancelPinDropOnEsc);
         }
+
         function handlePinDrop(e) {
           if (!itemPendingPlacement) return;
           itemPendingPlacement.latitude = e.latlng.lat;
           itemPendingPlacement.longitude = e.latlng.lng;
           finishPinDrop(`Image pin placed.`);
         }
+
         function cancelPinDropOnEsc(e) {
           if (e.key === "Escape") {
             finishPinDrop("Pin placement cancelled.");
           }
         }
+
         function finishPinDrop(message) {
           ui.map.classList.remove("pin-drop-mode");
           displayMessage(message, "info");
@@ -620,12 +687,12 @@
           document.removeEventListener("keydown", cancelPinDropOnEsc);
           updateUI();
         }
+
         function saveSession() {
           const sessionData = {
             version: "1.0",
             createdAt: new Date().toISOString(),
             imageData: currentImageData.map(({ marker, ...rest }) => rest),
-            analystNotes: "",
           };
           const dataStr = JSON.stringify(sessionData, null, 2);
           const blob = new Blob([dataStr], { type: "application/json" });
@@ -639,6 +706,7 @@
           URL.revokeObjectURL(url);
           displayMessage("Session saved.", "info");
         }
+
         function loadSession() {
           const input = document.createElement("input");
           input.type = "file";
@@ -661,13 +729,16 @@
           };
           input.click();
         }
+
         function loadSessionData(sessionData) {
           currentImageData = sessionData.imageData.map((item) => ({
             ...item,
+            title: item.title || "",
             notes: item.notes || "",
           }));
           updateUI();
         }
+
         async function loadInitialData() {
           try {
             const response = await fetch("output/data.json");
@@ -677,9 +748,9 @@
                 imageData: data.map((item) => ({
                   ...item,
                   id: Date.now() + Math.random(),
+                  title: "",
                   notes: "",
                 })),
-                analystNotes: "",
               });
             } else {
               throw new Error("No initial data file.");
@@ -691,6 +762,7 @@
             );
           }
         }
+
         function displayMessage(message, type = "info", duration = 4000) {
           const existingMsg = document.querySelector(".user-message");
           if (existingMsg) existingMsg.remove();
@@ -702,6 +774,7 @@
             msgDiv.remove();
           }, duration);
         }
+
         function getExifData(file) {
           return new Promise((resolve, reject) => {
             EXIF.getData(file, function () {
@@ -760,9 +833,10 @@
               img.src = e.target.result;
             };
             reader.onerror = reject;
-            reader.readAsDataURL(file);
+            reader.readAsText(file);
           });
         }
+
         loadInitialData();
       });
     </script>
