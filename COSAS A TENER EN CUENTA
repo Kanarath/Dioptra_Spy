@@ -1,3 +1,7 @@
+para activar venv:
+source venv/Scripts/activate
+
+
 para poder probarlo tienes que hacer en bash:
 python -m http.server
 
