@@ -198,7 +198,8 @@
         display: inline-flex;
         transition: background-color 0.2s;
       }
-      .icon-button:hover {
+      .icon-button:hover,
+      .icon-button.active {
         background-color: var(--border-color);
       }
       .material-symbols-outlined {
@@ -235,22 +236,24 @@
       .collapsible-header h3 {
         margin: 0;
         font-size: 1rem;
+        user-select: none;
       }
       .collapse-icon {
         transition: transform var(--tran-speed) ease;
+        user-select: none;
       }
       .collapsible-content {
-        max-height: 500px; /* A large value for expansion */
+        max-height: 500px;
         overflow: hidden;
         transition: max-height var(--tran-speed) ease-out,
-          padding var(--tran-speed) ease-out;
+          padding var(--tran-speed) ease-out, margin var(--tran-speed) ease-out;
         padding-top: 10px;
       }
       .collapsed .collapsible-content {
         max-height: 0;
         padding-top: 0;
         padding-bottom: 0;
-        margin-top: 0;
+        margin-top: -15px;
       }
       .collapsed .collapse-icon {
         transform: rotate(-90deg);
@@ -321,6 +324,11 @@
       .locate-button:hover {
         background-color: #0b5ed7;
       }
+      #general-notes-section {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+      }
       #general-notes {
         width: 100%;
         box-sizing: border-box;
@@ -330,10 +338,13 @@
         padding: 10px;
         font-family: inherit;
         font-size: 14px;
-        min-height: 120px;
+        flex-grow: 1;
       }
       .leaflet-popup-content {
         font-size: 13px;
+      }
+      .leaflet-popup-content img {
+        max-width: 180px;
       }
       .user-message {
         position: absolute;
@@ -373,6 +384,21 @@
       #drop-zone.visible {
         display: flex;
       }
+
+      /* Thumbnail Tooltip on Map */
+      .thumbnail-tooltip {
+        background: transparent;
+        border: none;
+        box-shadow: none;
+      }
+      .thumbnail-tooltip img {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border: 2px solid white;
+        border-radius: 4px;
+        box-shadow: var(--shadow);
+      }
     </style>
   </head>
   <body>
@@ -384,6 +410,13 @@
         <div class="logo">Dioptra<span>Spy</span></div>
       </div>
       <div class="header-right">
+        <button
+          id="toggle-thumbnails-btn"
+          class="icon-button"
+          title="Toggle All Thumbnails on Map"
+        >
+          <span class="material-symbols-outlined">imagesmode</span>
+        </button>
         <button class="action-button" id="save-session-btn">
           <span class="material-symbols-outlined">save</span> Save
         </button>
@@ -394,50 +427,7 @@
     </header>
 
     <aside id="sidebar">
-      <div class="sidebar-section">
-        <input
-          type="text"
-          id="filter-input"
-          placeholder="Filter by title, notes, date..."
-        />
-        <div id="filter-results-count"></div>
-      </div>
-      <div class="sidebar-section collapsible" id="geolocated-section">
-        <div class="collapsible-header">
-          <h3>Geolocated Images</h3>
-          <span class="collapse-icon material-symbols-outlined"
-            >expand_less</span
-          >
-        </div>
-        <div class="collapsible-content">
-          <div id="geolocated-list" class="image-list-container"></div>
-        </div>
-      </div>
-      <div class="sidebar-section collapsible" id="unlocated-section">
-        <div class="collapsible-header">
-          <h3>Unlocated Images</h3>
-          <span class="collapse-icon material-symbols-outlined"
-            >expand_less</span
-          >
-        </div>
-        <div class="collapsible-content">
-          <div id="unlocated-list" class="image-list-container"></div>
-        </div>
-      </div>
-      <div class="sidebar-section collapsible" id="general-notes-section">
-        <div class="collapsible-header">
-          <h3>General Case Notes</h3>
-          <span class="collapse-icon material-symbols-outlined"
-            >expand_less</span
-          >
-        </div>
-        <div class="collapsible-content">
-          <textarea
-            id="general-notes"
-            placeholder="Overall summary, to-do list..."
-          ></textarea>
-        </div>
-      </div>
+      <!-- Sidebar content is now dynamically generated -->
     </aside>
 
     <aside id="inspector">
@@ -490,14 +480,14 @@
         let currentImageData = [];
         let itemPendingPlacement = null;
         let selectedItemId = null;
+        let isThumbnailViewActive = false;
 
         const ui = {
           sidebar: document.getElementById("sidebar"),
           sidebarToggle: document.getElementById("sidebar-toggle"),
           saveBtn: document.getElementById("save-session-btn"),
           loadBtn: document.getElementById("load-session-btn"),
-          geolocatedList: document.getElementById("geolocated-list"),
-          unlocatedList: document.getElementById("unlocated-list"),
+          toggleThumbnailsBtn: document.getElementById("toggle-thumbnails-btn"),
           dropZone: document.getElementById("drop-zone"),
           mainContent: document.getElementById("main-content"),
           map: document.getElementById("map"),
@@ -511,9 +501,6 @@
           detailsDatetime: document.getElementById("details-datetime"),
           detailsModel: document.getElementById("details-model"),
           detailsNotes: document.getElementById("details-notes"),
-          filterInput: document.getElementById("filter-input"),
-          filterResultsCount: document.getElementById("filter-results-count"),
-          generalNotes: document.getElementById("general-notes"),
         };
 
         ui.sidebarToggle.addEventListener("click", () => {
@@ -526,7 +513,7 @@
         });
         ui.saveBtn.addEventListener("click", saveSession);
         ui.loadBtn.addEventListener("click", loadSession);
-        ui.filterInput.addEventListener("input", () => updateUI());
+        ui.toggleThumbnailsBtn.addEventListener("click", toggleThumbnailView);
 
         const map = L.map(ui.map, { zoomControl: false }).setView([20, 0], 2);
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -534,6 +521,7 @@
         }).addTo(map);
         L.control.zoom({ position: "bottomright" }).addTo(map);
         const markersLayer = L.markerClusterGroup();
+        const thumbnailLayer = L.layerGroup();
         map.addLayer(markersLayer);
 
         ui.sidebar.addEventListener("transitionend", () =>
@@ -577,6 +565,37 @@
           if (e.dataTransfer.files.length > 0)
             processFiles(e.dataTransfer.files);
         });
+
+        function setupSidebarHTML() {
+          ui.sidebar.innerHTML = `
+                    <div class="sidebar-section">
+                        <input type="text" id="filter-input" placeholder="Filter by title, notes, date...">
+                        <div id="filter-results-count"></div>
+                    </div>
+                    <div class="sidebar-section collapsible" id="geolocated-section">
+                        <div class="collapsible-header"><h3>Geolocated Images</h3><span class="collapse-icon material-symbols-outlined">expand_less</span></div>
+                        <div class="collapsible-content"><div id="geolocated-list" class="image-list-container"></div></div>
+                    </div>
+                    <div class="sidebar-section collapsible" id="unlocated-section">
+                        <div class="collapsible-header"><h3>Unlocated Images</h3><span class="collapse-icon material-symbols-outlined">expand_less</span></div>
+                        <div class="collapsible-content"><div id="unlocated-list" class="image-list-container"></div></div>
+                    </div>
+                    <div class="sidebar-section collapsible" id="general-notes-section">
+                        <div class="collapsible-header"><h3>General Case Notes</h3><span class="collapse-icon material-symbols-outlined">expand_less</span></div>
+                        <div class="collapsible-content"><textarea id="general-notes" placeholder="Overall summary, to-do list..."></textarea></div>
+                    </div>
+                `;
+          // Re-assign ui elements that were inside the sidebar
+          ui.filterInput = document.getElementById("filter-input");
+          ui.filterResultsCount = document.getElementById(
+            "filter-results-count"
+          );
+          ui.geolocatedList = document.getElementById("geolocated-list");
+          ui.unlocatedList = document.getElementById("unlocated-list");
+          ui.generalNotes = document.getElementById("general-notes");
+          ui.filterInput.addEventListener("input", () => updateUI());
+          setupCollapsibleSections();
+        }
 
         function setupCollapsibleSections() {
           const savedState =
@@ -647,7 +666,6 @@
           displayMessage(message, "info");
           updateUI();
         }
-
         function updateUI() {
           const filterTerm = ui.filterInput.value.toLowerCase();
           const filteredData = currentImageData.filter((item) => {
@@ -672,13 +690,14 @@
 
         function populateMap(imageData) {
           markersLayer.clearLayers();
+          thumbnailLayer.clearLayers();
           const geolocated = imageData.filter(
             (item) => item.latitude !== null && item.longitude !== null
           );
           geolocated.forEach((item) => {
             const displayTitle =
               item.title || item.original_path.split(/[\\/]/).pop();
-            const popupContent = `<b>${displayTitle}</b><br><small>Click pin for details</small>`;
+            const popupContent = `<b>${displayTitle}</b><br><small>Click pin for details</small><hr><img src="${item.thumbnail_rel_path}" alt="Thumbnail">`;
             const marker = L.marker([item.latitude, item.longitude], {
               draggable: true,
             }).bindPopup(popupContent);
@@ -704,8 +723,18 @@
                 marker.setLatLng(originalPos);
               }
             });
+            const tooltip = L.tooltip({
+              permanent: true,
+              direction: "top",
+              offset: [0, -10],
+              className: "thumbnail-tooltip",
+            })
+              .setLatLng([item.latitude, item.longitude])
+              .setContent(`<img src="${item.thumbnail_rel_path}" alt="thumb">`);
             item.marker = marker;
+            item.tooltip = tooltip;
             markersLayer.addLayer(marker);
+            thumbnailLayer.addLayer(tooltip);
           });
         }
 
@@ -773,7 +802,6 @@
           const listItem = document.querySelector(`[data-item-id='${itemId}']`);
           if (listItem) listItem.classList.add("selected");
         }
-
         function deselectAll() {
           if (selectedItemId) {
             saveInspectorDetails(selectedItemId);
@@ -787,7 +815,6 @@
               .forEach((el) => el.classList.remove("selected"));
           }
         }
-
         function saveInspectorDetails(itemId) {
           const item = currentImageData.find((i) => i.id === itemId);
           if (item) {
@@ -795,7 +822,6 @@
             item.datetime = ui.detailsDatetime.value;
             item.model = ui.detailsModel.value;
             item.notes = ui.detailsNotes.value;
-            // Also update the sidebar in real-time as you type
             const listItem = document.querySelector(
               `[data-item-id='${itemId}'] .filename`
             );
@@ -804,7 +830,6 @@
                 item.title || item.original_path.split(/[\\/]/).pop();
           }
         }
-
         function startPinDrop(itemId) {
           if (itemPendingPlacement) {
             displayMessage("Already in pin-drop mode.", "info");
@@ -841,13 +866,14 @@
           document.removeEventListener("keydown", cancelPinDropOnEsc);
           updateUI();
         }
-
         function saveSession() {
           if (selectedItemId) saveInspectorDetails(selectedItemId);
           const sessionData = {
             version: "1.2",
             createdAt: new Date().toISOString(),
-            imageData: currentImageData.map(({ marker, ...rest }) => rest),
+            imageData: currentImageData.map(
+              ({ marker, tooltip, ...rest }) => rest
+            ),
             generalNotes: ui.generalNotes.value,
           };
           const dataStr = JSON.stringify(sessionData, null, 2);
@@ -862,7 +888,6 @@
           URL.revokeObjectURL(url);
           displayMessage("Session saved.", "info");
         }
-
         function loadSession() {
           const input = document.createElement("input");
           input.type = "file";
@@ -885,7 +910,6 @@
           };
           input.click();
         }
-
         function loadSessionData(sessionData) {
           currentImageData = sessionData.imageData.map((item) => ({
             ...item,
@@ -897,7 +921,6 @@
           deselectAll();
           updateUI();
         }
-
         async function loadInitialData() {
           try {
             const response = await fetch("output/data.json");
@@ -922,7 +945,6 @@
             );
           }
         }
-
         function displayMessage(message, type = "info", duration = 4000) {
           const existingMsg = document.querySelector(".user-message");
           if (existingMsg) existingMsg.remove();
@@ -995,9 +1017,21 @@
             reader.readAsText(file);
           });
         }
+        function toggleThumbnailView() {
+          isThumbnailViewActive = !isThumbnailViewActive;
+          if (isThumbnailViewActive) {
+            map.addLayer(thumbnailLayer);
+          } else {
+            map.removeLayer(thumbnailLayer);
+          }
+          ui.toggleThumbnailsBtn.classList.toggle(
+            "active",
+            isThumbnailViewActive
+          );
+        }
 
         // --- Kick everything off ---
-        setupCollapsibleSections();
+        setupSidebarHTML();
         loadInitialData();
       });
     </script>
