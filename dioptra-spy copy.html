@@ -572,9 +572,13 @@
             <label for="details-tags">Tags (comma-separated)</label
             ><input type="text" id="details-tags" />
           </div>
-          <div class="inspector-group" data-type="image">
-            <label for="details-model">Camera Model</label
-            ><input type="text" id="details-model" />
+          <div class="inspector-group">
+            <label for="details-latitude">Latitude</label
+            ><input type="number" id="details-latitude" step="any" />
+          </div>
+          <div class="inspector-group">
+            <label for="details-longitude">Longitude</label
+            ><input type="number" id="details-longitude" step="any" />
           </div>
           <div class="inspector-group">
             <label for="details-notes">Notes</label
@@ -629,6 +633,18 @@
             <div class="inspector-group">
               <label for="tool-range-radius">Radius (km)</label
               ><input type="number" id="tool-range-radius" step="0.1" />
+            </div>
+            <div class="inspector-group">
+              <label for="tool-range-notes">Notes</label
+              ><textarea id="tool-range-notes"></textarea>
+            </div>
+            <div class="inspector-group">
+              <label for="tool-range-tags">Tags (comma-separated)</label
+              ><input type="text" id="tool-range-tags" />
+            </div>
+            <div class="inspector-group">
+              <label for="tool-range-color">Color</label
+              ><input type="color" id="tool-range-color" />
             </div>
           </div>
           <button
@@ -742,7 +758,8 @@
           detailsDate: document.getElementById("details-date"),
           detailsTime: document.getElementById("details-time"),
           detailsTags: document.getElementById("details-tags"),
-          detailsModel: document.getElementById("details-model"),
+          detailsLatitude: document.getElementById("details-latitude"),
+          detailsLongitude: document.getElementById("details-longitude"),
           detailsNotes: document.getElementById("details-notes"),
           streetViewBtn: document.getElementById("street-view-btn"),
           deleteItemBtn: document.getElementById("delete-item-btn"),
@@ -758,6 +775,9 @@
           toolMeasureDistance: document.getElementById("tool-measure-distance"),
           toolRangeInfo: document.getElementById("tool-range-info"),
           toolRangeRadius: document.getElementById("tool-range-radius"),
+          toolRangeNotes: document.getElementById("tool-range-notes"),
+          toolRangeTags: document.getElementById("tool-range-tags"),
+          toolRangeColor: document.getElementById("tool-range-color"),
           deleteToolBtn: document.getElementById("delete-tool-btn"),
 
           manualGeoModal: document.getElementById("manual-geo-modal"),
@@ -851,12 +871,20 @@
           ui.inspector
             .querySelectorAll("input, textarea")
             .forEach((element) => {
-              element.addEventListener("input", () => {
+              const handler = () => {
                 if (selectedItemId) saveInspectorDetails(selectedItemId);
                 if (selectedConnectionId)
                   saveConnectionDetails(selectedConnectionId);
                 if (selectedToolId) saveToolDetails(selectedToolId);
-              });
+              };
+              if (
+                element.id === "details-latitude" ||
+                element.id === "details-longitude"
+              ) {
+                element.addEventListener("change", handleCoordinateChange);
+              } else {
+                element.addEventListener("input", handler);
+              }
             });
 
           ui.deleteItemBtn.addEventListener("click", () => {
@@ -1041,6 +1069,7 @@
             addInteractionToMeasureTool(newMeasureTool);
             clearMeasureTool(true);
             displayMessage("Measurement saved.", "info");
+            toggleTool("measure");
           });
         }
 
@@ -1094,10 +1123,13 @@
               type: "range",
               center: latlng,
               radius: radiusKm * 1000,
+              notes: "",
+              tags: [],
+              color: "#0000FF",
             };
             const circle = L.circle(latlng, {
               radius: newRangeTool.radius,
-              color: "blue",
+              color: newRangeTool.color,
               fillOpacity: 0.1,
             });
             const marker = L.marker(latlng, { draggable: true });
@@ -1108,6 +1140,7 @@
             newRangeTool.marker = marker;
             rangeToolsData.push(newRangeTool);
             addInteractionToRangeTool(newRangeTool);
+            displayMessage("Range tool created.", "info");
           } else if (radiusKm !== null) {
             alert("Invalid radius.");
           }
@@ -1227,6 +1260,10 @@
                 const newPos = movedMarker.getLatLng();
                 item.latitude = newPos.lat;
                 item.longitude = newPos.lng;
+                if (selectedItemId === item.id) {
+                  ui.detailsLatitude.value = newPos.lat.toFixed(6);
+                  ui.detailsLongitude.value = newPos.lng.toFixed(6);
+                }
                 updateConnectionLineVisuals(null, item.id);
                 updateThumbnailView();
               } else {
@@ -1381,11 +1418,7 @@
         }
 
         function startPinDrop(itemId, itemDetails = null) {
-          if (itemPendingPlacement || activeTool)
-            return displayMessage(
-              "Deactivate current tool before adding a new item.",
-              "error"
-            );
+          if (itemPendingPlacement) return;
           if (itemId)
             itemPendingPlacement = currentImageData.find(
               (i) => i.id === itemId
@@ -1427,14 +1460,13 @@
           if (item) {
             ui.inspector.classList.add("open");
             ui.inspectorPlaceholder.style.display = "none";
+            ui.inspectorConnectionDetails.style.display = "none";
+            ui.inspectorToolDetails.style.display = "none";
             ui.inspectorItemDetails.style.display = "block";
+
             ui.inspectorItemDetails
               .querySelectorAll("[data-type]")
               .forEach((el) => (el.style.display = "none"));
-            if (item.type === "image")
-              ui.inspectorItemDetails.querySelector(
-                '[data-type="image"]'
-              ).style.display = "block";
             if (item.type === "vehicle")
               ui.inspectorItemDetails.querySelector(
                 '[data-type="vehicle"]'
@@ -1457,13 +1489,15 @@
             ui.detailsDate.value = item.date || "";
             ui.detailsTime.value = item.time || "";
             ui.detailsTags.value = (item.tags || []).join(", ");
-            ui.detailsModel.value = item.model || "";
             ui.detailsVehicleType.value = item.vehicleType || "";
             ui.detailsNotes.value = item.notes || "";
-            if (item.marker)
-              markersLayer.zoomToShowLayer(item.marker, () =>
-                item.marker.openPopup()
-              );
+            ui.detailsLatitude.value = item.isLocated
+              ? item.latitude.toFixed(6)
+              : "";
+            ui.detailsLongitude.value = item.isLocated
+              ? item.longitude.toFixed(6)
+              : "";
+            if (item.marker) item.marker.openPopup();
           }
           updateUI();
         }
@@ -1479,10 +1513,41 @@
               .map((t) => t.trim())
               .filter(Boolean);
             item.notes = ui.detailsNotes.value;
-            if (item.type === "image") item.model = ui.detailsModel.value;
             if (item.type === "vehicle")
               item.vehicleType = ui.detailsVehicleType.value;
             updateUI();
+          }
+        }
+
+        function handleCoordinateChange() {
+          if (!selectedItemId) return;
+          const item = currentImageData.find((i) => i.id === selectedItemId);
+          const originalLat = item.latitude;
+          const originalLon = item.longitude;
+          const newLat = parseFloat(ui.detailsLatitude.value);
+          const newLon = parseFloat(ui.detailsLongitude.value);
+          if (isNaN(newLat) || isNaN(newLon)) {
+            displayMessage("Invalid coordinate format.", "error");
+            ui.detailsLatitude.value = originalLat.toFixed(6);
+            ui.detailsLongitude.value = originalLon.toFixed(6);
+            return;
+          }
+          if (
+            confirm(
+              `Move pin from [${originalLat.toFixed(4)}, ${originalLon.toFixed(
+                4
+              )}] to [${newLat.toFixed(4)}, ${newLon.toFixed(4)}]?`
+            )
+          ) {
+            item.latitude = newLat;
+            item.longitude = newLon;
+            item.marker.setLatLng([newLat, newLon]);
+            updateConnectionLineVisuals(null, item.id);
+            updateThumbnailView();
+            displayMessage("Pin location updated.", "info");
+          } else {
+            ui.detailsLatitude.value = originalLat.toFixed(6);
+            ui.detailsLongitude.value = originalLon.toFixed(6);
           }
         }
 
@@ -1745,7 +1810,7 @@
           if (selectedConnectionId) saveConnectionDetails(selectedConnectionId);
           if (selectedToolId) saveToolDetails(selectedToolId);
           const sessionData = {
-            version: "1.7",
+            version: "1.8",
             createdAt: new Date().toISOString(),
             imageData: currentImageData.map(
               ({ marker, tooltip, ...rest }) => rest
@@ -1855,7 +1920,7 @@
             tool.center = L.latLng(tool.center.lat, tool.center.lng);
             tool.circle = L.circle(tool.center, {
               radius: tool.radius,
-              color: "blue",
+              color: tool.color,
               fillOpacity: 0.1,
             });
             tool.marker = L.marker(tool.center, { draggable: true });
@@ -1894,6 +1959,8 @@
           if (conn) {
             ui.inspector.classList.add("open");
             ui.inspectorPlaceholder.style.display = "none";
+            ui.inspectorItemDetails.style.display = "none";
+            ui.inspectorToolDetails.style.display = "none";
             ui.inspectorConnectionDetails.style.display = "block";
             ui.connectionLabel.value = conn.label || "";
             ui.connectionNotes.value = conn.notes || "";
@@ -1920,6 +1987,8 @@
           if (tool) {
             ui.inspector.classList.add("open");
             ui.inspectorPlaceholder.style.display = "none";
+            ui.inspectorItemDetails.style.display = "none";
+            ui.inspectorConnectionDetails.style.display = "none";
             ui.inspectorToolDetails.style.display = "block";
             if (tool.type === "measure") {
               ui.toolMeasureInfo.style.display = "block";
@@ -1930,6 +1999,9 @@
               ui.toolMeasureInfo.style.display = "none";
               ui.toolRangeInfo.style.display = "block";
               ui.toolRangeRadius.value = (tool.radius / 1000).toFixed(2);
+              ui.toolRangeNotes.value = tool.notes || "";
+              ui.toolRangeTags.value = (tool.tags || []).join(", ");
+              ui.toolRangeColor.value = tool.color || "#0000FF";
             }
           }
           updateUI();
@@ -1938,7 +2010,14 @@
           let tool = rangeToolsData.find((t) => t.id === id);
           if (tool) {
             tool.radius = parseFloat(ui.toolRangeRadius.value) * 1000;
+            tool.notes = ui.toolRangeNotes.value;
+            tool.tags = ui.toolRangeTags.value
+              .split(",")
+              .map((t) => t.trim())
+              .filter(Boolean);
+            tool.color = ui.toolRangeColor.value;
             tool.circle.setRadius(tool.radius);
+            tool.circle.setStyle({ color: tool.color });
           }
         }
         function toggleThumbnailView() {
@@ -1947,12 +2026,14 @@
             "active",
             isThumbnailViewActive
           );
-          if (isThumbnailViewActive) map.addLayer(thumbnailLayer);
-          else map.removeLayer(thumbnailLayer);
+          updateThumbnailView();
         }
         function updateThumbnailView() {
           thumbnailLayer.clearLayers();
-          if (!isThumbnailViewActive) return;
+          if (!isThumbnailViewActive) {
+            if (map.hasLayer(thumbnailLayer)) map.removeLayer(thumbnailLayer);
+            return;
+          }
           currentImageData
             .filter((item) => item.isLocated)
             .forEach((item) => {
@@ -1975,6 +2056,7 @@
               item.tooltip = tooltip;
               thumbnailLayer.addLayer(tooltip);
             });
+          if (!map.hasLayer(thumbnailLayer)) map.addLayer(thumbnailLayer);
         }
         function setupCollapsibleSections() {
           const savedState =
@@ -2054,9 +2136,13 @@
                 );
               }
             })
-            .catch(() =>
-              displayMessage("Ready. Add items or load a session file.", "info")
-            );
+            .catch((error) => {
+              console.error("Error loading initial data:", error);
+              displayMessage(
+                "Could not load initial data. Check console for errors. This may be due to browser security policies for local files. Try using a local server.",
+                "error"
+              );
+            });
         }
         function displayMessage(message, type = "info", duration = 4000) {
           const existingMsg = document.querySelector(".user-message");
