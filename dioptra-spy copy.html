@@ -68,8 +68,6 @@
         box-sizing: border-box;
         z-index: 1001;
       }
-
-      /* Left Sidebar */
       #sidebar {
         position: fixed;
         top: var(--header-height);
@@ -88,8 +86,6 @@
       #sidebar.open {
         transform: translateX(0);
       }
-
-      /* Main Content Area */
       #main-content {
         width: 100%;
         height: 100%;
@@ -102,22 +98,22 @@
       #sidebar.open ~ #main-content {
         padding-left: var(--sidebar-width);
       }
-      #inspector.open ~ #main-content,
-      #connection-inspector.open ~ #main-content {
+      #inspector.open ~ #main-content {
         padding-right: var(--inspector-width);
       }
       #map {
         height: 100%;
         width: 100%;
       }
-      #map.pin-drop-mode {
+      #map.pin-drop-mode,
+      #map.measure-mode,
+      #map.range-mode {
         cursor: crosshair;
       }
       #map.connection-mode {
-        cursor: cell; /* Crosshair-like for connection */
+        cursor: cell;
       }
 
-      /* Right Inspector Panel */
       #inspector {
         position: fixed;
         top: var(--header-height);
@@ -129,11 +125,12 @@
         z-index: 1000;
         transform: translateX(var(--inspector-width));
         transition: transform var(--tran-speed) ease;
-        display: flex;
+        display: none;
         flex-direction: column;
       }
       #inspector.open {
         transform: translateX(0);
+        display: flex;
       }
       #inspector-content {
         padding: 20px;
@@ -151,7 +148,9 @@
         border-radius: 8px;
         margin-bottom: 20px;
         object-fit: cover;
+        cursor: pointer;
       }
+
       .inspector-group {
         margin-bottom: 20px;
       }
@@ -175,17 +174,17 @@
         font-size: 14px;
         resize: none;
       }
-      #details-notes {
+      #details-notes,
+      #general-notes {
         resize: vertical;
-        min-height: 150px;
+        min-height: 120px;
       }
 
-      /* Other Components */
       .header-left,
       .header-right {
         display: flex;
         align-items: center;
-        gap: 15px;
+        gap: 10px;
       }
       .logo {
         font-size: 1.2rem;
@@ -205,12 +204,13 @@
       }
       .icon-button:hover,
       .icon-button.active {
-        background-color: var(--border-color);
+        background-color: #e2e6ea;
       }
       .material-symbols-outlined {
         vertical-align: middle;
         font-size: 20px;
       }
+
       .action-button {
         background-color: var(--bg-color);
         border: 1px solid var(--border-color);
@@ -221,21 +221,16 @@
         display: flex;
         align-items: center;
         gap: 5px;
-        transition: background-color 0.2s;
-      }
-      .action-button:hover {
-        background-color: #e2e6ea;
       }
       .action-button.primary {
         background-color: var(--primary-color);
         color: white;
-        border-color: var(--primary-color);
       }
-      .action-button.primary:hover {
-        background-color: #0b5ed7;
+      .action-button.danger {
+        background-color: #dc3545;
+        color: white;
       }
 
-      /* Collapsible Sidebar Sections */
       .sidebar-section {
         padding: 15px;
         border-bottom: 1px solid var(--border-color);
@@ -252,14 +247,13 @@
         user-select: none;
       }
       .collapse-icon {
-        transition: transform var(--tran-speed) ease;
+        transition: transform 0.3s ease;
         user-select: none;
       }
       .collapsible-content {
         max-height: 500px;
-        overflow: hidden;
-        transition: max-height var(--tran-speed) ease-out,
-          padding var(--tran-speed) ease-out, margin var(--tran-speed) ease-out;
+        overflow-y: hidden;
+        transition: max-height 0.3s ease-out;
         padding-top: 10px;
       }
       .collapsed .collapsible-content {
@@ -285,11 +279,11 @@
         color: #6c757d;
         margin-top: 8px;
       }
-      .image-list-container {
+      .list-container {
         overflow-y: auto;
         max-height: 20vh;
       }
-      .image-list-item {
+      .list-item {
         display: flex;
         align-items: center;
         gap: 10px;
@@ -298,42 +292,37 @@
         cursor: pointer;
         transition: background-color 0.2s;
       }
-      .image-list-item:hover,
-      .image-list-item.selected {
+      .list-item:hover,
+      .list-item.selected {
         background-color: #e9ecef;
       }
-      .image-list-item img {
+      .list-item img,
+      .list-item .item-icon {
         width: 40px;
         height: 40px;
         object-fit: cover;
         border-radius: 4px;
-      }
-      .image-list-item .text-icon {
-        width: 40px;
-        height: 40px;
+        flex-shrink: 0;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 20px;
-        font-weight: bold;
+        font-size: 24px;
         color: var(--primary-color);
         background-color: var(--border-color);
-        border-radius: 4px;
-        flex-shrink: 0;
       }
-      .image-list-item .info {
+      .list-item .info {
         font-size: 13px;
         line-height: 1.3;
         overflow: hidden;
         flex-grow: 1;
       }
-      .image-list-item .filename {
+      .list-item .filename {
         font-weight: 600;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
       }
-      .image-list-item .details {
+      .list-item .details {
         font-size: 11px;
         color: #6c757d;
       }
@@ -345,52 +334,14 @@
         font-size: 11px;
         border-radius: 4px;
         cursor: pointer;
-        transition: background-color 0.2s;
       }
-      .locate-button:hover {
-        background-color: #0b5ed7;
-      }
-      #general-notes-section {
-        flex-grow: 1;
-        display: flex;
-        flex-direction: column;
-      }
-      #general-notes {
-        width: 100%;
-        box-sizing: border-box;
-        resize: none;
-        border: 1px solid var(--border-color);
-        border-radius: 6px;
-        padding: 10px;
-        font-family: inherit;
-        font-size: 14px;
-        flex-grow: 1;
-      }
-      .leaflet-popup-content {
-        font-size: 13px;
-      }
-      .leaflet-popup-content img {
-        max-width: 180px;
-      }
-      .leaflet-popup-content .text-icon-popup {
-        width: 180px;
-        height: 120px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 60px;
-        font-weight: bold;
-        color: var(--primary-color);
-        background-color: var(--border-color);
-        border-radius: 4px;
-        margin-bottom: 10px;
-      }
+
       .user-message {
         position: absolute;
         top: 20px;
         left: 50%;
         transform: translateX(-50%);
-        z-index: 1002;
+        z-index: 2000;
         color: white;
         padding: 12px 20px;
         border-radius: 8px;
@@ -398,7 +349,7 @@
         font-size: 14px;
         text-align: center;
         max-width: 80%;
-        pointer-events: none; /* Allow clicks to pass through */
+        pointer-events: none;
       }
       .user-message.error {
         background: rgba(220, 53, 69, 0.9);
@@ -418,47 +369,22 @@
         display: none;
         align-items: center;
         justify-content: center;
-        text-align: center;
         pointer-events: none;
       }
       #drop-zone.visible {
         display: flex;
       }
 
-      /* Thumbnail Tooltip on Map */
-      .thumbnail-tooltip {
-        background: transparent;
-        border: none;
-        box-shadow: none;
-      }
-      .thumbnail-tooltip img,
-      .thumbnail-tooltip .text-icon-map {
-        width: 80px;
-        height: 80px;
-        object-fit: cover;
-        border: 2px solid white;
-        border-radius: 4px;
-        box-shadow: var(--shadow);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 40px;
-        font-weight: bold;
-        color: var(--primary-color);
-        background-color: var(--white);
-      }
-
-      /* Manual Geo-Location Modal */
       .modal {
-        display: none; /* Hidden by default */
-        position: fixed; /* Stay in place */
-        z-index: 1003; /* Sit on top */
+        display: none;
+        position: fixed;
+        z-index: 3000;
         left: 0;
         top: 0;
-        width: 100%; /* Full width */
-        height: 100%; /* Full height */
-        overflow: auto; /* Enable scroll if needed */
-        background-color: rgba(0, 0, 0, 0.4); /* Black w/ opacity */
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.6);
         justify-content: center;
         align-items: center;
       }
@@ -477,88 +403,61 @@
         float: right;
         font-size: 28px;
         font-weight: bold;
-      }
-      .close-button:hover,
-      .close-button:focus {
-        color: black;
-        text-decoration: none;
         cursor: pointer;
       }
       .modal-buttons {
         text-align: right;
         margin-top: 20px;
       }
-      .modal-buttons button {
-        margin-left: 10px;
+
+      #image-viewer-modal .modal-content {
+        width: 90vw;
+        height: 90vh;
+        padding: 10px;
+        background: #333;
+      }
+      #image-viewer-modal img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+      #image-viewer-modal .close-button {
+        position: absolute;
+        top: 15px;
+        right: 35px;
+        color: white;
+        font-size: 40px;
       }
 
-      /* Connection Inspector */
-      #connection-inspector {
-        position: fixed;
-        top: var(--header-height);
-        right: 0;
-        width: var(--inspector-width);
-        height: calc(100% - var(--header-height));
-        background: var(--white);
-        border-left: 1px solid var(--border-color);
-        z-index: 1000;
-        transform: translateX(var(--inspector-width));
-        transition: transform var(--tran-speed) ease;
-        display: none; /* Hidden by default, handled by JS .open class */
-        flex-direction: column;
-      }
-      #connection-inspector.open {
-        transform: translateX(0);
-        display: flex;
-      }
-      #connection-inspector-content {
-        padding: 20px;
-        flex-grow: 1;
-        overflow-y: auto;
-      }
-      #connection-inspector-placeholder {
-        color: #6c757d;
-        text-align: center;
-        padding-top: 50px;
-      }
-      #connection-color-picker {
-        width: 100%;
-        height: 30px;
+      .custom-div-icon {
+        background: none;
         border: none;
-        padding: 0;
-        cursor: pointer;
       }
-      .connection-list-item {
+      .thumbnail-tooltip {
+        background: transparent;
+        border: none;
+        box-shadow: none;
+      }
+      .thumbnail-tooltip img,
+      .thumbnail-tooltip .item-icon-map {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border: 2px solid white;
+        border-radius: 4px;
+        box-shadow: var(--shadow);
         display: flex;
         align-items: center;
-        gap: 10px;
-        padding: 8px;
-        border-radius: 6px;
-        cursor: pointer;
-        transition: background-color 0.2s;
-        font-size: 13px;
-        line-height: 1.3;
-      }
-      .connection-list-item:hover,
-      .connection-list-item.selected {
-        background-color: #e9ecef;
-      }
-      .connection-list-item .color-box {
-        width: 20px;
-        height: 20px;
-        border-radius: 3px;
-        border: 1px solid #ccc;
-        flex-shrink: 0;
-      }
-      .connection-list-item .info {
-        flex-grow: 1;
-        overflow: hidden;
-        white-space: nowrap;
-        text-overflow: ellipsis;
+        justify-content: center;
+        font-size: 40px;
+        font-weight: bold;
+        color: var(--primary-color);
+        background-color: var(--white);
       }
     </style>
   </head>
   <body>
+    <!-- HEADER -->
     <header id="header">
       <div class="header-left">
         <button id="sidebar-toggle" class="icon-button" title="Toggle Sidebar">
@@ -567,18 +466,41 @@
         <div class="logo">Dioptra<span>Spy</span></div>
       </div>
       <div class="header-right">
-        <button
-          id="toggle-thumbnails-btn"
-          class="icon-button"
-          title="Toggle All Thumbnails on Map"
-        >
-          <span class="material-symbols-outlined">imagesmode</span>
-        </button>
         <button id="add-image-btn" class="icon-button" title="Add Image">
           <span class="material-symbols-outlined">add_photo_alternate</span>
         </button>
-        <button id="add-note-btn" class="icon-button" title="Add Map Note">
+        <button id="add-note-btn" class="icon-button" title="Add Note">
           <span class="material-symbols-outlined">note_add</span>
+        </button>
+        <button id="add-person-btn" class="icon-button" title="Add Person">
+          <span class="material-symbols-outlined">person_add</span>
+        </button>
+        <button id="add-vehicle-btn" class="icon-button" title="Add Vehicle">
+          <span class="material-symbols-outlined">directions_car</span>
+        </button>
+        <span
+          style="border-left: 1px solid var(--border-color); height: 25px"
+        ></span>
+        <button
+          id="toggle-thumbnails-btn"
+          class="icon-button"
+          title="Toggle All Thumbnails"
+        >
+          <span class="material-symbols-outlined">imagesmode</span>
+        </button>
+        <button
+          id="measure-tool-btn"
+          class="icon-button"
+          title="Measure Distance"
+        >
+          <span class="material-symbols-outlined">straighten</span>
+        </button>
+        <button
+          id="range-tool-btn"
+          class="icon-button"
+          title="Draw Range Circle"
+        >
+          <span class="material-symbols-outlined">public</span>
         </button>
         <button
           id="add-connection-btn"
@@ -586,6 +508,12 @@
           title="Add Connection"
         >
           <span class="material-symbols-outlined">link</span>
+        </button>
+        <span
+          style="border-left: 1px solid var(--border-color); height: 25px"
+        ></span>
+        <button class="action-button" id="export-html-btn">
+          <span class="material-symbols-outlined">download</span> Export
         </button>
         <button class="action-button" id="save-session-btn">
           <span class="material-symbols-outlined">save</span> Save
@@ -596,119 +524,143 @@
       </div>
     </header>
 
-    <aside id="sidebar">
-      <!-- Sidebar content is now dynamically generated -->
-    </aside>
+    <!-- SIDEBAR -->
+    <aside id="sidebar"></aside>
 
+    <!-- INSPECTOR -->
     <aside id="inspector">
       <div id="inspector-content">
-        <div id="inspector-placeholder">Select a pin to see its details.</div>
-        <div id="inspector-details" style="display: none">
-          <img id="details-thumbnail" src="" alt="Selected item thumbnail" />
-          <div id="details-text-icon" class="text-icon" style="display: none">
-            T
-          </div>
-          <div class="inspector-group">
-            <label for="details-title">Custom Title</label>
-            <input
-              type="text"
-              id="details-title"
-              placeholder="e.g., Main Entrance - North View"
-            />
-          </div>
-          <div class="inspector-group">
-            <label for="details-datetime">Date/Time</label>
-            <input
-              type="text"
-              id="details-datetime"
-              placeholder="YYYY:MM:DD HH:MM:SS"
-            />
-          </div>
-          <div class="inspector-group">
-            <label for="details-model">Camera Model</label>
-            <input
-              type="text"
-              id="details-model"
-              placeholder="e.g., iPhone 15 Pro"
-            />
-          </div>
-          <div class="inspector-group">
-            <label for="details-notes">Pin Notes</label>
-            <textarea
-              id="details-notes"
-              placeholder="Enter notes for this specific pin..."
-            ></textarea>
-          </div>
+        <div id="inspector-placeholder">
+          Select an item, connection, or tool to see its details.
         </div>
-      </div>
-    </aside>
 
-    <aside id="connection-inspector">
-      <div id="connection-inspector-content">
-        <div id="connection-inspector-placeholder">
-          Select a connection to see its details.
-        </div>
-        <div id="connection-details" style="display: none">
-          <h3>Connection Details</h3>
+        <div id="inspector-item-details" style="display: none">
+          <img id="details-thumbnail" src="" alt="Selected item thumbnail" />
+          <div
+            id="details-icon"
+            class="item-icon"
+            style="
+              display: none;
+              font-size: 48px;
+              height: 80px;
+              width: 80px;
+              margin: 0 auto 20px auto;
+              border-radius: 8px;
+            "
+          ></div>
           <div class="inspector-group">
-            <label for="connection-label">Connection Label</label>
-            <input
+            <label for="details-title">Title</label
+            ><input type="text" id="details-title" />
+          </div>
+          <div class="inspector-group" data-type="vehicle">
+            <label for="details-vehicle-type">Vehicle Type</label
+            ><input
               type="text"
-              id="connection-label"
-              placeholder="e.g., Path to Entrance"
+              id="details-vehicle-type"
+              placeholder="Car, motorcycle, boat..."
             />
           </div>
           <div class="inspector-group">
-            <label for="connection-notes">Connection Notes</label>
-            <textarea
-              id="connection-notes"
-              placeholder="Enter notes for this connection..."
-            ></textarea>
+            <label for="details-date">Date</label
+            ><input type="text" id="details-date" placeholder="DD/MM/YYYY" />
           </div>
           <div class="inspector-group">
-            <label for="connection-color-picker">Line Color</label>
-            <input type="color" id="connection-color-picker" value="#0d6efd" />
+            <label for="details-time">Time</label
+            ><input type="text" id="details-time" placeholder="HH:MM:SS" />
+          </div>
+          <div class="inspector-group">
+            <label for="details-tags">Tags (comma-separated)</label
+            ><input type="text" id="details-tags" />
+          </div>
+          <div class="inspector-group" data-type="image">
+            <label for="details-model">Camera Model</label
+            ><input type="text" id="details-model" />
+          </div>
+          <div class="inspector-group">
+            <label for="details-notes">Notes</label
+            ><textarea id="details-notes"></textarea>
           </div>
           <button
             class="action-button"
-            id="delete-connection-btn"
-            style="background-color: #dc3545; color: white"
+            id="street-view-btn"
+            style="width: 100%; margin-bottom: 10px"
           >
+            <span class="material-symbols-outlined">travel_explore</span> View
+            in Street View
+          </button>
+          <button
+            class="action-button danger"
+            id="delete-item-btn"
+            style="width: 100%"
+          >
+            <span class="material-symbols-outlined">delete</span> Delete Item
+          </button>
+        </div>
+
+        <div id="inspector-connection-details" style="display: none">
+          <h3>Connection Details</h3>
+          <div class="inspector-group">
+            <label for="connection-label">Label</label
+            ><input type="text" id="connection-label" />
+          </div>
+          <div class="inspector-group">
+            <label for="connection-notes">Notes</label
+            ><textarea id="connection-notes"></textarea>
+          </div>
+          <div class="inspector-group">
+            <label for="connection-color-picker">Line Color</label
+            ><input type="color" id="connection-color-picker" />
+          </div>
+          <button class="action-button danger" id="delete-connection-btn">
             <span class="material-symbols-outlined">delete</span> Delete
             Connection
+          </button>
+        </div>
+
+        <div id="inspector-tool-details" style="display: none">
+          <h3>Tool Details</h3>
+          <div id="tool-measure-info">
+            <div class="inspector-group">
+              <label>Total Distance</label
+              ><input type="text" id="tool-measure-distance" readonly />
+            </div>
+          </div>
+          <div id="tool-range-info">
+            <div class="inspector-group">
+              <label for="tool-range-radius">Radius (km)</label
+              ><input type="number" id="tool-range-radius" step="0.1" />
+            </div>
+          </div>
+          <button
+            class="action-button danger"
+            id="delete-tool-btn"
+            style="width: 100%"
+          >
+            <span class="material-symbols-outlined">delete</span> Delete Tool
           </button>
         </div>
       </div>
     </aside>
 
+    <!-- MAIN CONTENT AREA -->
     <main id="main-content">
       <div id="map"></div>
       <div id="drop-zone"><div id="drop-zone-text">Drop Images Here</div></div>
     </main>
 
-    <!-- Manual Geo-Location Modal -->
+    <!-- MODALS -->
     <div id="manual-geo-modal" class="modal">
       <div class="modal-content">
         <span class="close-button">&times;</span>
         <h2>Manually Enter Coordinates</h2>
         <p id="modal-item-name"></p>
         <div class="inspector-group">
-          <label for="modal-latitude">Latitude</label>
-          <input
-            type="number"
-            id="modal-latitude"
-            step="0.000001"
-            placeholder="e.g., 34.052235"
-          />
+          <label for="modal-latitude">Latitude</label
+          ><input type="number" id="modal-latitude" step="any" />
         </div>
         <div class="inspector-group">
-          <label for="modal-longitude">Longitude</label>
-          <input
-            type="number"
-            id="modal-longitude"
-            step="0.000001"
-            placeholder="e.g., -118.243683"
-          />
+          <label for="modal-longitude">Longitude</label
+          ><input type="number" id="modal-longitude" step="any" />
         </div>
         <div class="modal-buttons">
           <button class="action-button" id="modal-cancel-btn">Cancel</button>
@@ -721,22 +673,36 @@
         </div>
       </div>
     </div>
+    <div id="image-viewer-modal" class="modal">
+      <span class="close-button">&times;</span>
+      <div class="modal-content">
+        <img id="image-viewer-src" src="" alt="Full size image" />
+      </div>
+    </div>
 
     <script>
       document.addEventListener("DOMContentLoaded", function () {
-        let currentImageData = []; // Stores all items (images, notes)
-        let itemPendingPlacement = null; // For image/note placement, holds the item object
+        // STATE VARIABLES
+        let currentImageData = [];
+        let itemPendingPlacement = null;
         let connectionPendingPlacement = {
           active: false,
-          firstPinId: null,
-          line: null, // Leaflet Polyline object
-          connectionId: null, // ID of the connection being built
+          firstPoint: null,
+          line: null,
         };
-        let connectionsData = []; // Stores connection objects
+        let connectionsData = [];
+        let measureToolsData = [];
+        let rangeToolsData = [];
+
         let selectedItemId = null;
         let selectedConnectionId = null;
+        let selectedToolId = null;
+
+        let activeTool = null;
+        let measureState = { points: [], line: null, markers: [] };
         let isThumbnailViewActive = false;
 
+        // UI ELEMENT MAPPING
         const ui = {
           sidebar: document.getElementById("sidebar"),
           sidebarToggle: document.getElementById("sidebar-toggle"),
@@ -744,22 +710,55 @@
           loadBtn: document.getElementById("load-session-btn"),
           addImgBtn: document.getElementById("add-image-btn"),
           addNoteBtn: document.getElementById("add-note-btn"),
+          addPersonBtn: document.getElementById("add-person-btn"),
+          addVehicleBtn: document.getElementById("add-vehicle-btn"),
           addConnectionBtn: document.getElementById("add-connection-btn"),
           toggleThumbnailsBtn: document.getElementById("toggle-thumbnails-btn"),
+          measureToolBtn: document.getElementById("measure-tool-btn"),
+          rangeToolBtn: document.getElementById("range-tool-btn"),
+          exportHtmlBtn: document.getElementById("export-html-btn"),
           dropZone: document.getElementById("drop-zone"),
           mainContent: document.getElementById("main-content"),
           map: document.getElementById("map"),
+
           inspector: document.getElementById("inspector"),
           inspectorPlaceholder: document.getElementById(
             "inspector-placeholder"
           ),
-          inspectorDetails: document.getElementById("inspector-details"),
+          inspectorItemDetails: document.getElementById(
+            "inspector-item-details"
+          ),
+          inspectorConnectionDetails: document.getElementById(
+            "inspector-connection-details"
+          ),
+          inspectorToolDetails: document.getElementById(
+            "inspector-tool-details"
+          ),
+
           detailsThumbnail: document.getElementById("details-thumbnail"),
-          detailsTextIcon: document.getElementById("details-text-icon"),
+          detailsIcon: document.getElementById("details-icon"),
           detailsTitle: document.getElementById("details-title"),
-          detailsDatetime: document.getElementById("details-datetime"),
+          detailsVehicleType: document.getElementById("details-vehicle-type"),
+          detailsDate: document.getElementById("details-date"),
+          detailsTime: document.getElementById("details-time"),
+          detailsTags: document.getElementById("details-tags"),
           detailsModel: document.getElementById("details-model"),
           detailsNotes: document.getElementById("details-notes"),
+          streetViewBtn: document.getElementById("street-view-btn"),
+          deleteItemBtn: document.getElementById("delete-item-btn"),
+
+          connectionLabel: document.getElementById("connection-label"),
+          connectionNotes: document.getElementById("connection-notes"),
+          connectionColorPicker: document.getElementById(
+            "connection-color-picker"
+          ),
+          deleteConnectionBtn: document.getElementById("delete-connection-btn"),
+
+          toolMeasureInfo: document.getElementById("tool-measure-info"),
+          toolMeasureDistance: document.getElementById("tool-measure-distance"),
+          toolRangeInfo: document.getElementById("tool-range-info"),
+          toolRangeRadius: document.getElementById("tool-range-radius"),
+          deleteToolBtn: document.getElementById("delete-tool-btn"),
 
           manualGeoModal: document.getElementById("manual-geo-modal"),
           modalCloseBtn: document.querySelector(
@@ -774,157 +773,413 @@
           ),
           modalItemName: document.getElementById("modal-item-name"),
 
-          connectionInspector: document.getElementById("connection-inspector"),
-          connectionInspectorPlaceholder: document.getElementById(
-            "connection-inspector-placeholder"
+          imageViewerModal: document.getElementById("image-viewer-modal"),
+          imageViewerSrc: document.getElementById("image-viewer-src"),
+          imageViewerCloseBtn: document.querySelector(
+            "#image-viewer-modal .close-button"
           ),
-          connectionDetails: document.getElementById("connection-details"),
-          connectionLabel: document.getElementById("connection-label"),
-          connectionNotes: document.getElementById("connection-notes"),
-          connectionColorPicker: document.getElementById(
-            "connection-color-picker"
-          ),
-          deleteConnectionBtn: document.getElementById("delete-connection-btn"),
         };
 
-        ui.sidebarToggle.addEventListener("click", () => {
-          ui.sidebar.classList.toggle("open");
-          ui.mainContent.style.paddingLeft = ui.sidebar.classList.contains(
-            "open"
-          )
-            ? "var(--sidebar-width)"
-            : "0";
-          map.invalidateSize();
-        });
-        ui.saveBtn.addEventListener("click", saveSession);
-        ui.loadBtn.addEventListener("click", loadSession);
-        ui.addImgBtn.addEventListener("click", () => triggerFileUpload());
-        ui.addNoteBtn.addEventListener("click", () => startPinDrop(null, true)); // True for note
-        ui.addConnectionBtn.addEventListener("click", startConnectionMode);
-        ui.toggleThumbnailsBtn.addEventListener("click", toggleThumbnailView);
-
+        // MAP INITIALIZATION
         const map = L.map(ui.map, { zoomControl: false }).setView([20, 0], 2);
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
           attribution: "&copy; OpenStreetMap",
         }).addTo(map);
         L.control.zoom({ position: "bottomright" }).addTo(map);
         const markersLayer = L.markerClusterGroup();
-        const thumbnailLayer = L.layerGroup();
         const connectionsLayer = L.layerGroup().addTo(map);
+        const toolsLayer = L.layerGroup().addTo(map);
+        const thumbnailLayer = L.layerGroup();
         map.addLayer(markersLayer);
 
-        ui.sidebar.addEventListener("transitionend", () =>
-          map.invalidateSize()
-        );
-        ui.inspector.addEventListener("transitionend", () =>
-          map.invalidateSize()
-        );
-        ui.connectionInspector.addEventListener("transitionend", () =>
-          map.invalidateSize()
-        );
-        map.on("click", (e) => {
-          if (connectionPendingPlacement.active) {
-            if (!e.originalEvent.target.closest(".leaflet-marker-icon")) {
-              finishConnectionMode(true, "Connection cancelled.");
-            }
-          } else {
-            deselectAll();
-            deselectConnection();
-          }
+        // CUSTOM ICONS
+        const personIcon = L.divIcon({
+          className: "custom-div-icon",
+          html: `<span class="material-symbols-outlined" style="font-size: 32px; color: #4CAF50;">person</span>`,
+          iconSize: [32, 32],
+          iconAnchor: [16, 32],
         });
-        map.on("mousemove", handleConnectionMouseMove);
+        const vehicleIcon = L.divIcon({
+          className: "custom-div-icon",
+          html: `<span class="material-symbols-outlined" style="font-size: 32px; color: #F44336;">directions_car</span>`,
+          iconSize: [32, 32],
+          iconAnchor: [16, 32],
+        });
+        const noteIcon = L.divIcon({
+          className: "custom-div-icon",
+          html: `<span class="material-symbols-outlined" style="font-size: 32px; color: #2196F3;">note</span>`,
+          iconSize: [32, 32],
+          iconAnchor: [16, 32],
+        });
 
-        [
-          "details-title",
-          "details-datetime",
-          "details-model",
-          "details-notes",
-        ].forEach((id) => {
-          document.getElementById(id).addEventListener("input", () => {
-            if (selectedItemId) saveInspectorDetails(selectedItemId);
+        // APP KICK-OFF
+        setupEventListeners();
+        setupSidebarHTML();
+        loadInitialData();
+
+        // ===================================================================================
+        // EVENT LISTENERS & SETUP
+        // ===================================================================================
+
+        function setupEventListeners() {
+          ui.sidebarToggle.addEventListener("click", () => {
+            ui.sidebar.classList.toggle("open");
+            setTimeout(() => map.invalidateSize(), 300);
           });
-        });
+          ui.saveBtn.addEventListener("click", saveSession);
+          ui.loadBtn.addEventListener("click", loadSession);
+          ui.exportHtmlBtn.addEventListener("click", generateReportHTML);
+          ui.addImgBtn.addEventListener("click", triggerFileUpload);
+          ui.addNoteBtn.addEventListener("click", () =>
+            startPinDrop(null, { type: "note", title: "New Note" })
+          );
+          ui.addPersonBtn.addEventListener("click", () =>
+            startPinDrop(null, { type: "person", title: "New Person" })
+          );
+          ui.addVehicleBtn.addEventListener("click", () =>
+            startPinDrop(null, { type: "vehicle", title: "New Vehicle" })
+          );
+          ui.toggleThumbnailsBtn.addEventListener("click", toggleThumbnailView);
+          ui.addConnectionBtn.addEventListener("click", () =>
+            toggleTool("connection")
+          );
+          ui.measureToolBtn.addEventListener("click", () =>
+            toggleTool("measure")
+          );
+          ui.rangeToolBtn.addEventListener("click", () => toggleTool("range"));
 
-        ui.connectionLabel.addEventListener("input", () => {
-          if (selectedConnectionId) saveConnectionDetails(selectedConnectionId);
-        });
-        ui.connectionNotes.addEventListener("input", () => {
-          if (selectedConnectionId) saveConnectionDetails(selectedConnectionId);
-        });
-        ui.connectionColorPicker.addEventListener("input", (e) => {
-          if (selectedConnectionId) {
-            saveConnectionDetails(selectedConnectionId);
-            updateConnectionLineVisuals(selectedConnectionId);
-          }
-        });
-        ui.deleteConnectionBtn.addEventListener("click", () => {
-          if (
-            selectedConnectionId &&
-            confirm("Are you sure you want to delete this connection?")
-          ) {
-            const conn = connectionsData.find(
-              (c) => c.id === selectedConnectionId
-            );
-            if (conn && conn.line) {
-              connectionsLayer.removeLayer(conn.line);
+          ui.inspector
+            .querySelectorAll("input, textarea")
+            .forEach((element) => {
+              element.addEventListener("input", () => {
+                if (selectedItemId) saveInspectorDetails(selectedItemId);
+                if (selectedConnectionId)
+                  saveConnectionDetails(selectedConnectionId);
+                if (selectedToolId) saveToolDetails(selectedToolId);
+              });
+            });
+
+          ui.deleteItemBtn.addEventListener("click", () => {
+            if (
+              selectedItemId &&
+              confirm("Delete this item and all its connections?")
+            )
+              deleteItem(selectedItemId);
+          });
+          ui.streetViewBtn.addEventListener("click", () => {
+            const item = currentImageData.find((i) => i.id === selectedItemId);
+            if (item && item.isLocated)
+              window.open(
+                `https://www.google.com/maps?q&layer=c&cbll=${item.latitude},${item.longitude}`,
+                "_blank"
+              );
+          });
+          ui.detailsThumbnail.addEventListener("click", () => {
+            const item = currentImageData.find((i) => i.id === selectedItemId);
+            if (item && item.type === "image" && item.thumbnail_rel_path) {
+              ui.imageViewerSrc.src = item.thumbnail_rel_path;
+              ui.imageViewerModal.style.display = "flex";
             }
-            connectionsData = connectionsData.filter(
-              (c) => c.id !== selectedConnectionId
-            );
-            deselectConnection();
-            updateUI();
-          }
-        });
+          });
 
-        ui.mainContent.addEventListener("dragover", (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          ui.dropZone.classList.add("visible");
-        });
-        ui.mainContent.addEventListener("dragleave", (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          if (
-            e.relatedTarget === null ||
-            !ui.mainContent.contains(e.relatedTarget)
-          ) {
+          ui.deleteConnectionBtn.addEventListener("click", () => {
+            if (selectedConnectionId && confirm("Delete this connection?"))
+              deleteConnection(selectedConnectionId);
+          });
+          ui.deleteToolBtn.addEventListener("click", () => {
+            if (selectedToolId && confirm("Delete this tool?"))
+              deleteTool(selectedToolId);
+          });
+
+          ui.modalCloseBtn.addEventListener(
+            "click",
+            () => (ui.manualGeoModal.style.display = "none")
+          );
+          ui.modalCancelBtn.addEventListener(
+            "click",
+            () => (ui.manualGeoModal.style.display = "none")
+          );
+          ui.modalSaveBtn.addEventListener("click", handleModalSave);
+          ui.modalPlaceManuallyBtn.addEventListener("click", () => {
+            if (itemPendingPlacement) {
+              ui.manualGeoModal.style.display = "none";
+              startPinDrop(itemPendingPlacement.id);
+            }
+          });
+          ui.imageViewerModal.addEventListener(
+            "click",
+            () => (ui.imageViewerModal.style.display = "none")
+          );
+          ui.imageViewerCloseBtn.addEventListener(
+            "click",
+            () => (ui.imageViewerModal.style.display = "none")
+          );
+
+          ui.mainContent.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            ui.dropZone.classList.add("visible");
+          });
+          ui.mainContent.addEventListener("dragleave", (e) => {
+            e.preventDefault();
             ui.dropZone.classList.remove("visible");
-          }
-        });
-        ui.mainContent.addEventListener("drop", (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          ui.dropZone.classList.remove("visible");
-          if (e.dataTransfer.files.length > 0)
-            processFiles(e.dataTransfer.files);
-        });
+          });
+          ui.mainContent.addEventListener("drop", (e) => {
+            e.preventDefault();
+            ui.dropZone.classList.remove("visible");
+            if (e.dataTransfer.files.length > 0)
+              processFiles(e.dataTransfer.files);
+          });
 
-        // Modal Handlers
-        ui.modalCloseBtn.addEventListener(
-          "click",
-          () => (ui.manualGeoModal.style.display = "none")
-        );
-        ui.modalCancelBtn.addEventListener("click", () => {
-          ui.manualGeoModal.style.display = "none";
-          if (itemPendingPlacement) {
-            currentImageData = currentImageData.filter(
-              (item) => item.id !== itemPendingPlacement.id
-            );
-            itemPendingPlacement = null;
-            updateUI();
+          map.on("click", (e) => {
+            if (
+              e.originalEvent.target.closest(
+                ".leaflet-marker-icon, .leaflet-interactive"
+              )
+            )
+              return;
+
+            if (activeTool === "connection") handleConnectionMapClick(e.latlng);
+            else if (activeTool === "measure") handleMeasureClick(e);
+            else if (activeTool === "range") handleRangeClick(e.latlng);
+            else deselectAll();
+          });
+          map.on("mousemove", handleConnectionMouseMove);
+
+          ["sidebar", "inspector"].forEach((id) => {
+            document
+              .getElementById(id)
+              .addEventListener("transitionend", () => map.invalidateSize());
+          });
+        }
+
+        // ===================================================================================
+        // TOOL MANAGEMENT
+        // ===================================================================================
+
+        function toggleTool(toolName) {
+          const btn = {
+            connection: ui.addConnectionBtn,
+            measure: ui.measureToolBtn,
+            range: ui.rangeToolBtn,
+          }[toolName];
+          const isDeactivating = activeTool === toolName;
+
+          if (activeTool) {
+            const oldBtn = {
+              connection: ui.addConnectionBtn,
+              measure: ui.measureToolBtn,
+              range: ui.rangeToolBtn,
+            }[activeTool];
+            oldBtn.classList.remove("active");
+            map.getContainer().classList.remove(`${activeTool}-mode`);
+            if (activeTool === "connection") finishConnectionMode(true);
+            if (activeTool === "measure") clearMeasureTool(false);
           }
-        });
-        ui.modalSaveBtn.addEventListener("click", () => {
+          activeTool = null;
+
+          if (!isDeactivating) {
+            activeTool = toolName;
+            btn.classList.add("active");
+            map.getContainer().classList.add(`${toolName}-mode`);
+            let message = `${
+              toolName.charAt(0).toUpperCase() + toolName.slice(1)
+            } tool activated.`;
+            if (toolName === "measure")
+              message +=
+                " Click to add points, double-click on last point to finish.";
+            displayMessage(message, "info");
+          } else {
+            displayMessage(
+              `${
+                toolName.charAt(0).toUpperCase() + toolName.slice(1)
+              } tool deactivated.`,
+              "info"
+            );
+          }
+        }
+
+        function handleMeasureClick(e) {
+          const latlng = e.latlng;
+          measureState.points.push(latlng);
+          const marker = L.circleMarker(latlng, {
+            radius: 5,
+            color: "red",
+          }).addTo(toolsLayer);
+          measureState.markers.push(marker);
+
+          if (measureState.points.length > 1) {
+            if (measureState.line) measureState.line.addLatLng(latlng);
+            else
+              measureState.line = L.polyline(measureState.points, {
+                color: "red",
+              }).addTo(toolsLayer);
+          }
+
+          if (measureState.points.length > 1) {
+            const popupContent = `Distance: ${calculateDistance(
+              measureState.points
+            )} km`;
+            if (measureState.markers.length > 1)
+              measureState.markers[
+                measureState.markers.length - 2
+              ].closePopup();
+            marker
+              .bindPopup(popupContent, { closeButton: false, autoClose: false })
+              .openPopup();
+          }
+
+          marker.on("dblclick", (ev) => {
+            L.DomEvent.stop(ev);
+            const newMeasureTool = {
+              id: Date.now() + Math.random(),
+              type: "measure",
+              points: [...measureState.points],
+              line: measureState.line,
+              markers: measureState.markers,
+            };
+            measureToolsData.push(newMeasureTool);
+            addInteractionToMeasureTool(newMeasureTool);
+            clearMeasureTool(true);
+            displayMessage("Measurement saved.", "info");
+          });
+        }
+
+        function addInteractionToMeasureTool(tool) {
+          tool.markers.forEach((marker, index) => {
+            marker.setZIndexOffset(1000);
+            marker.options.draggable = true;
+            marker.on("drag", () => {
+              tool.points[index] = marker.getLatLng();
+              tool.line.setLatLngs(tool.points);
+              const popupContent = `Distance: ${calculateDistance(
+                tool.points
+              )} km`;
+              tool.markers[tool.markers.length - 1]
+                .setPopupContent(popupContent)
+                .openPopup();
+              if (selectedToolId === tool.id)
+                ui.toolMeasureDistance.value =
+                  calculateDistance(tool.points) + " km";
+            });
+          });
+          tool.line.on("click", (e) => {
+            L.DomEvent.stop(e);
+            selectTool(tool.id);
+          });
+        }
+
+        function calculateDistance(points) {
+          let totalDistance = 0;
+          for (let i = 0; i < points.length - 1; i++) {
+            totalDistance += map.distance(points[i], points[i + 1]);
+          }
+          return (totalDistance / 1000).toFixed(2);
+        }
+
+        function clearMeasureTool(isFinished) {
+          if (!isFinished) {
+            if (measureState.line) toolsLayer.removeLayer(measureState.line);
+            measureState.markers.forEach((m) => toolsLayer.removeLayer(m));
+          }
+          measureState = { points: [], line: null, markers: [] };
+        }
+
+        function handleRangeClick(latlng) {
+          const radiusKm = parseFloat(
+            prompt("Enter radius in kilometers:", "1")
+          );
+          if (radiusKm && radiusKm > 0) {
+            const newRangeTool = {
+              id: Date.now() + Math.random(),
+              type: "range",
+              center: latlng,
+              radius: radiusKm * 1000,
+            };
+            const circle = L.circle(latlng, {
+              radius: newRangeTool.radius,
+              color: "blue",
+              fillOpacity: 0.1,
+            });
+            const marker = L.marker(latlng, { draggable: true });
+            newRangeTool.layer = L.layerGroup([circle, marker]).addTo(
+              toolsLayer
+            );
+            newRangeTool.circle = circle;
+            newRangeTool.marker = marker;
+            rangeToolsData.push(newRangeTool);
+            addInteractionToRangeTool(newRangeTool);
+          } else if (radiusKm !== null) {
+            alert("Invalid radius.");
+          }
+          toggleTool("range");
+        }
+
+        function addInteractionToRangeTool(tool) {
+          tool.marker.on("drag", () => {
+            const newCenter = tool.marker.getLatLng();
+            tool.center = newCenter;
+            tool.circle.setLatLng(newCenter);
+          });
+          tool.layer.on("click", (e) => {
+            L.DomEvent.stop(e);
+            selectTool(tool.id);
+          });
+        }
+
+        // ===================================================================================
+        // ITEM & OBJECT MANAGEMENT (CREATE, DELETE, SELECT)
+        // ===================================================================================
+
+        function deleteItem(itemId) {
+          const connectionsToDelete = connectionsData.filter((conn) =>
+            conn.pinIds.includes(itemId)
+          );
+          connectionsToDelete.forEach((conn) =>
+            deleteConnection(conn.id, true)
+          );
+          const item = currentImageData.find((i) => i.id === itemId);
+          if (item && item.marker) markersLayer.removeLayer(item.marker);
+          currentImageData = currentImageData.filter((i) => i.id !== itemId);
+          deselectAll();
+          updateUI();
+          displayMessage("Item deleted.", "info");
+        }
+
+        function deleteConnection(connectionId, silent = false) {
+          const conn = connectionsData.find((c) => c.id === connectionId);
+          if (conn && conn.line) connectionsLayer.removeLayer(conn.line);
+          connectionsData = connectionsData.filter(
+            (c) => c.id !== connectionId
+          );
+          if (selectedConnectionId === connectionId) deselectAll();
+          updateUI();
+          if (!silent) displayMessage("Connection deleted.", "info");
+        }
+
+        function deleteTool(toolId) {
+          let tool = measureToolsData.find((t) => t.id === toolId);
+          if (tool) {
+            toolsLayer.removeLayer(tool.line);
+            tool.markers.forEach((m) => toolsLayer.removeLayer(m));
+            measureToolsData = measureToolsData.filter((t) => t.id !== toolId);
+          }
+          tool = rangeToolsData.find((t) => t.id === toolId);
+          if (tool) {
+            toolsLayer.removeLayer(tool.layer);
+            rangeToolsData = rangeToolsData.filter((t) => t.id !== toolId);
+          }
+          deselectAll();
+          updateUI();
+          displayMessage("Tool deleted.", "info");
+        }
+
+        function handleModalSave() {
           if (!itemPendingPlacement) return;
           const lat = parseFloat(ui.modalLatitude.value);
           const lon = parseFloat(ui.modalLongitude.value);
-          if (isNaN(lat) || isNaN(lon)) {
-            displayMessage(
-              "Please enter valid latitude and longitude.",
-              "error"
-            );
-            return;
-          }
+          if (isNaN(lat) || isNaN(lon))
+            return displayMessage("Invalid coordinates.", "error");
+
           itemPendingPlacement.latitude = lat;
           itemPendingPlacement.longitude = lon;
           itemPendingPlacement.isLocated = true;
@@ -935,39 +1190,304 @@
           );
           itemPendingPlacement = null;
           updateUI();
-        });
-        ui.modalPlaceManuallyBtn.addEventListener("click", () => {
-          if (!itemPendingPlacement) return;
-          ui.manualGeoModal.style.display = "none";
-          startPinDrop(
-            itemPendingPlacement.id,
-            itemPendingPlacement.type === "note"
+        }
+
+        function getIconForItem(itemType) {
+          return (
+            { person: personIcon, vehicle: vehicleIcon, note: noteIcon }[
+              itemType
+            ] || new L.Icon.Default()
           );
-        });
+        }
+
+        function populateMap(imageData) {
+          markersLayer.clearLayers();
+          const geolocated = imageData.filter((item) => item.isLocated);
+          geolocated.forEach((item) => {
+            const marker = L.marker([item.latitude, item.longitude], {
+              draggable: true,
+              icon: getIconForItem(item.type),
+            }).bindPopup(
+              `<b>${item.title}</b><br><small>Click for details</small>`
+            );
+            marker.itemId = item.id;
+            marker.on("click", (e) => {
+              L.DomEvent.stopPropagation(e);
+              if (activeTool === "connection")
+                handleConnectionMarkerClick(item.id);
+              else selectItem(item.id);
+            });
+            let originalPosition;
+            marker.on("dragstart", function (e) {
+              originalPosition = e.target.getLatLng();
+            });
+            marker.on("dragend", function (e) {
+              const movedMarker = e.target;
+              if (confirm("Move pin to new location?")) {
+                const newPos = movedMarker.getLatLng();
+                item.latitude = newPos.lat;
+                item.longitude = newPos.lng;
+                updateConnectionLineVisuals(null, item.id);
+                updateThumbnailView();
+              } else {
+                movedMarker.setLatLng(originalPosition);
+              }
+            });
+            item.marker = marker;
+            markersLayer.addLayer(marker);
+          });
+          updateThumbnailView();
+        }
+
+        function finishConnectionMode(cancel = false, message = "") {
+          if (cancel && connectionPendingPlacement.line)
+            connectionsLayer.removeLayer(connectionPendingPlacement.line);
+          connectionPendingPlacement = {
+            active: false,
+            firstPoint: null,
+            line: null,
+          };
+          if (message) displayMessage(message, "info");
+        }
+
+        function handleConnectionClick(type, data) {
+          const endpoint =
+            type === "pin"
+              ? { type: "pin", id: data }
+              : { type: "coordinate", latlng: data };
+          if (!connectionPendingPlacement.firstPoint) {
+            connectionPendingPlacement.firstPoint = endpoint;
+            const latlng =
+              type === "pin"
+                ? currentImageData.find((i) => i.id === data).marker.getLatLng()
+                : data;
+            connectionPendingPlacement.line = L.polyline([latlng, latlng], {
+              color: "#FF0000",
+              weight: 6,
+              dashArray: "10, 10",
+            }).addTo(connectionsLayer);
+            displayMessage(
+              "Select the second pin or point on the map.",
+              "info"
+            );
+          } else {
+            const firstEndpoint = connectionPendingPlacement.firstPoint;
+            if (
+              firstEndpoint.type === "pin" &&
+              endpoint.type === "pin" &&
+              firstEndpoint.id === endpoint.id
+            )
+              return;
+            const latlng1 =
+              firstEndpoint.type === "pin"
+                ? currentImageData
+                    .find((i) => i.id === firstEndpoint.id)
+                    .marker.getLatLng()
+                : firstEndpoint.latlng;
+            const latlng2 =
+              endpoint.type === "pin"
+                ? currentImageData
+                    .find((i) => i.id === endpoint.id)
+                    .marker.getLatLng()
+                : endpoint.latlng;
+            connectionPendingPlacement.line
+              .setLatLngs([latlng1, latlng2])
+              .setStyle({ dashArray: null });
+            const newConnection = {
+              id: Date.now() + Math.random(),
+              endpoints: [firstEndpoint, endpoint],
+              pinIds: [firstEndpoint, endpoint]
+                .filter((e) => e.type === "pin")
+                .map((e) => e.id),
+              label: "",
+              notes: "",
+              color: "#FF0000",
+            };
+            newConnection.line = connectionPendingPlacement.line;
+            newConnection.line.connectionId = newConnection.id;
+            newConnection.line.on("click", (e) => {
+              L.DomEvent.stopPropagation(e);
+              selectConnection(newConnection.id);
+            });
+            connectionsData.push(newConnection);
+            updateUI();
+            finishConnectionMode(false, "Connection created.");
+            toggleTool("connection");
+          }
+        }
+
+        function handleConnectionMarkerClick(pinId) {
+          handleConnectionClick("pin", pinId);
+        }
+        function handleConnectionMapClick(latlng) {
+          handleConnectionClick("coordinate", latlng);
+        }
+
+        function handleConnectionMouseMove(e) {
+          if (activeTool === "connection" && connectionPendingPlacement.line) {
+            connectionPendingPlacement.line.setLatLngs([
+              connectionPendingPlacement.line.getLatLngs()[0],
+              e.latlng,
+            ]);
+          }
+        }
+
+        function updateConnectionLineVisuals(connId = null, movedPinId = null) {
+          const connectionsToUpdate = connId
+            ? [connectionsData.find((c) => c.id === connId)]
+            : connectionsData;
+          connectionsToUpdate.forEach((conn) => {
+            if (!conn || !conn.line) return;
+            conn.line.setStyle({ color: conn.color, weight: 6 });
+            if (conn.pinIds.includes(movedPinId) || movedPinId) {
+              const latlngs = conn.endpoints.map((endpoint) => {
+                if (endpoint.type === "pin") {
+                  const item = currentImageData.find(
+                    (i) => i.id === endpoint.id
+                  );
+                  return item && item.marker ? item.marker.getLatLng() : null;
+                }
+                return L.latLng(endpoint.latlng.lat, endpoint.latlng.lng);
+              });
+              if (latlngs.every((ll) => ll)) conn.line.setLatLngs(latlngs);
+            }
+          });
+        }
+
+        function handlePinDrop(e) {
+          if (!itemPendingPlacement) return;
+          itemPendingPlacement.latitude = e.latlng.lat;
+          itemPendingPlacement.longitude = e.latlng.lng;
+          itemPendingPlacement.isLocated = true;
+          finishPinDrop(`Item pin placed.`);
+        }
+
+        function finishPinDrop(message) {
+          ui.map.classList.remove("pin-drop-mode");
+          displayMessage(message, "info");
+          document.removeEventListener("keydown", cancelPinDropOnEsc);
+          itemPendingPlacement = null;
+          updateUI();
+        }
+
+        function cancelPinDropOnEsc(e) {
+          if (e.key === "Escape" && itemPendingPlacement) {
+            if (!itemPendingPlacement.isLocated)
+              currentImageData = currentImageData.filter(
+                (i) => i.id !== itemPendingPlacement.id
+              );
+            finishPinDrop("Pin placement cancelled.");
+          }
+        }
+
+        function startPinDrop(itemId, itemDetails = null) {
+          if (itemPendingPlacement || activeTool)
+            return displayMessage(
+              "Deactivate current tool before adding a new item.",
+              "error"
+            );
+          if (itemId)
+            itemPendingPlacement = currentImageData.find(
+              (i) => i.id === itemId
+            );
+          else if (itemDetails) {
+            const now = new Date();
+            const dd = String(now.getDate()).padStart(2, "0"),
+              mm = String(now.getMonth() + 1).padStart(2, "0"),
+              yyyy = now.getFullYear();
+            itemPendingPlacement = {
+              id: Date.now() + Math.random(),
+              type: itemDetails.type,
+              title: itemDetails.title,
+              isLocated: false,
+              latitude: null,
+              longitude: null,
+              notes: "",
+              tags: [],
+              date: `${dd}/${mm}/${yyyy}`,
+              time: now.toTimeString().split(" ")[0],
+              ...(itemDetails.type === "vehicle" && { vehicleType: "" }),
+            };
+            currentImageData.push(itemPendingPlacement);
+          }
+          if (!itemPendingPlacement) return;
+          ui.map.classList.add("pin-drop-mode");
+          displayMessage(
+            "Click map to place pin. Press ESC to cancel.",
+            "info"
+          );
+          map.once("click", handlePinDrop);
+          document.addEventListener("keydown", cancelPinDropOnEsc);
+        }
+
+        function selectItem(itemId) {
+          deselectAll(true);
+          selectedItemId = itemId;
+          const item = currentImageData.find((i) => i.id === itemId);
+          if (item) {
+            ui.inspector.classList.add("open");
+            ui.inspectorPlaceholder.style.display = "none";
+            ui.inspectorItemDetails.style.display = "block";
+            ui.inspectorItemDetails
+              .querySelectorAll("[data-type]")
+              .forEach((el) => (el.style.display = "none"));
+            if (item.type === "image")
+              ui.inspectorItemDetails.querySelector(
+                '[data-type="image"]'
+              ).style.display = "block";
+            if (item.type === "vehicle")
+              ui.inspectorItemDetails.querySelector(
+                '[data-type="vehicle"]'
+              ).style.display = "block";
+
+            if (item.type === "image" && item.thumbnail_rel_path) {
+              ui.detailsThumbnail.src = item.thumbnail_rel_path;
+              ui.detailsThumbnail.style.display = "block";
+              ui.detailsIcon.style.display = "none";
+            } else {
+              ui.detailsThumbnail.style.display = "none";
+              ui.detailsIcon.style.display = "flex";
+              ui.detailsIcon.innerHTML = `<span class="material-symbols-outlined">${
+                { note: "note", person: "person", vehicle: "directions_car" }[
+                  item.type
+                ]
+              }</span>`;
+            }
+            ui.detailsTitle.value = item.title || "";
+            ui.detailsDate.value = item.date || "";
+            ui.detailsTime.value = item.time || "";
+            ui.detailsTags.value = (item.tags || []).join(", ");
+            ui.detailsModel.value = item.model || "";
+            ui.detailsVehicleType.value = item.vehicleType || "";
+            ui.detailsNotes.value = item.notes || "";
+            if (item.marker)
+              markersLayer.zoomToShowLayer(item.marker, () =>
+                item.marker.openPopup()
+              );
+          }
+          updateUI();
+        }
+
+        function saveInspectorDetails(itemId) {
+          const item = currentImageData.find((i) => i.id === itemId);
+          if (item) {
+            item.title = ui.detailsTitle.value;
+            item.date = ui.detailsDate.value;
+            item.time = ui.detailsTime.value;
+            item.tags = ui.detailsTags.value
+              .split(",")
+              .map((t) => t.trim())
+              .filter(Boolean);
+            item.notes = ui.detailsNotes.value;
+            if (item.type === "image") item.model = ui.detailsModel.value;
+            if (item.type === "vehicle")
+              item.vehicleType = ui.detailsVehicleType.value;
+            updateUI();
+          }
+        }
 
         function setupSidebarHTML() {
-          ui.sidebar.innerHTML = `
-                    <div class="sidebar-section">
-                        <input type="text" id="filter-input" placeholder="Filter by title, notes, date...">
-                        <div id="filter-results-count"></div>
-                    </div>
-                    <div class="sidebar-section collapsible" id="geolocated-section">
-                        <div class="collapsible-header"><h3>Geolocated Items</h3><span class="collapse-icon material-symbols-outlined">expand_less</span></div>
-                        <div class="collapsible-content"><div id="geolocated-list" class="image-list-container"></div></div>
-                    </div>
-                    <div class="sidebar-section collapsible" id="unlocated-section">
-                        <div class="collapsible-header"><h3>Unlocated Items</h3><span class="collapse-icon material-symbols-outlined">expand_less</span></div>
-                        <div class="collapsible-content"><div id="unlocated-list" class="image-list-container"></div></div>
-                    </div>
-                    <div class="sidebar-section collapsible" id="connections-section">
-                        <div class="collapsible-header"><h3>Connections</h3><span class="collapse-icon material-symbols-outlined">expand_less</span></div>
-                        <div class="collapsible-content"><div id="connections-list" class="image-list-container"></div></div>
-                    </div>
-                    <div class="sidebar-section collapsible" id="general-notes-section">
-                        <div class="collapsible-header"><h3>General Case Notes</h3><span class="collapse-icon material-symbols-outlined">expand_less</span></div>
-                        <div class="collapsible-content"><textarea id="general-notes" placeholder="Overall summary, to-do list..."></textarea></div>
-                    </div>
-                `;
+          ui.sidebar.innerHTML = `<div class="sidebar-section"><input type="text" id="filter-input" placeholder="Filter by text or #tag"><div id="filter-results-count"></div></div><div class="sidebar-section collapsible" id="geolocated-section"><div class="collapsible-header"><h3>Geolocated Items</h3><span class="collapse-icon material-symbols-outlined">expand_less</span></div><div class="collapsible-content"><div id="geolocated-list" class="list-container"></div></div></div><div class="sidebar-section collapsible" id="unlocated-section"><div class="collapsible-header"><h3>Unlocated Items</h3><span class="collapse-icon material-symbols-outlined">expand_less</span></div><div class="collapsible-content"><div id="unlocated-list" class="list-container"></div></div></div><div class="sidebar-section collapsible" id="connections-section"><div class="collapsible-header"><h3>Connections</h3><span class="collapse-icon material-symbols-outlined">expand_less</span></div><div class="collapsible-content"><div id="connections-list" class="list-container"></div></div></div><div class="sidebar-section collapsible" id="general-notes-section" style="flex-grow: 1; display: flex; flex-direction: column;"><div class="collapsible-header"><h3>General Case Notes</h3><span class="collapse-icon material-symbols-outlined">expand_less</span></div><div class="collapsible-content" style="flex-grow: 1; display: flex; flex-direction: column;"><textarea id="general-notes" style="flex-grow:1;"></textarea></div></div>`;
           ui.filterInput = document.getElementById("filter-input");
           ui.filterResultsCount = document.getElementById(
             "filter-results-count"
@@ -980,87 +1500,134 @@
           setupCollapsibleSections();
         }
 
-        function setupCollapsibleSections() {
-          const savedState =
-            JSON.parse(localStorage.getItem("dioptraSidebarState")) || {};
-          ui.sidebar.addEventListener("click", (e) => {
-            const header = e.target.closest(".collapsible-header");
-            if (header) {
-              const section = header.closest(".sidebar-section.collapsible");
-              if (section) {
-                section.classList.toggle("collapsed");
-                savedState[section.id] =
-                  section.classList.contains("collapsed");
-                localStorage.setItem(
-                  "dioptraSidebarState",
-                  JSON.stringify(savedState)
-                );
-              }
-            }
+        function updateUI() {
+          const filterValue = ui.filterInput.value.toLowerCase().trim();
+          const isTagFilter = filterValue.startsWith("#");
+          const filterTerm = isTagFilter
+            ? filterValue.substring(1)
+            : filterValue;
+          const allData = [...currentImageData].sort((a, b) =>
+            (a.title || "").localeCompare(b.title || "")
+          );
+          const filteredData = allData.filter((item) => {
+            if (!filterTerm) return true;
+            if (isTagFilter)
+              return (item.tags || []).some((tag) =>
+                tag.toLowerCase().includes(filterTerm)
+              );
+            return [
+              item.title,
+              item.notes,
+              item.date,
+              item.time,
+              item.model,
+              item.vehicleType,
+            ]
+              .join(" ")
+              .toLowerCase()
+              .includes(filterTerm);
           });
-          document
-            .querySelectorAll(".sidebar-section.collapsible")
-            .forEach((section) => {
-              if (savedState[section.id] === true) {
-                section.classList.add("collapsed");
-              }
-            });
+          populateMap(filteredData);
+          populateSidebar(allData);
+          populateConnectionsList();
+          if (filterTerm)
+            ui.filterResultsCount.textContent = `Showing ${filteredData.length} of ${currentImageData.length} items.`;
+          else
+            ui.filterResultsCount.textContent = `Total items: ${currentImageData.length}`;
         }
 
-        function triggerFileUpload() {
-          const input = document.createElement("input");
-          input.type = "file";
-          input.accept = "image/*";
-          input.multiple = true;
-          input.onchange = (e) => {
-            if (e.target.files.length > 0) {
-              processFiles(e.target.files);
+        function populateSidebar(imageData) {
+          ui.geolocatedList.innerHTML = "";
+          ui.unlocatedList.innerHTML = "";
+          imageData.forEach((item) => {
+            const listItem = document.createElement("div");
+            listItem.className = "list-item";
+            if (item.id === selectedItemId) listItem.classList.add("selected");
+            let iconHtml = "";
+            switch (item.type) {
+              case "image":
+                iconHtml = `<img src="${item.thumbnail_rel_path}" alt="thumb">`;
+                break;
+              case "note":
+                iconHtml = `<div class="item-icon"><span class="material-symbols-outlined">note</span></div>`;
+                break;
+              case "person":
+                iconHtml = `<div class="item-icon"><span class="material-symbols-outlined">person</span></div>`;
+                break;
+              case "vehicle":
+                iconHtml = `<div class="item-icon"><span class="material-symbols-outlined">directions_car</span></div>`;
+                break;
             }
-          };
-          input.click();
+            const targetList = item.isLocated
+              ? ui.geolocatedList
+              : ui.unlocatedList;
+            if (item.isLocated) {
+              listItem.innerHTML = `${iconHtml}<div class="info"><div class="filename">${
+                item.title
+              }</div><div class="details">${item.date || ""}</div></div>`;
+              listItem.addEventListener("click", (e) => {
+                e.stopPropagation();
+                selectItem(item.id);
+              });
+            } else {
+              listItem.innerHTML = `${iconHtml}<div class="info"><div class="filename">${item.title}</div></div><button class="locate-button">Locate</button>`;
+              listItem
+                .querySelector(".locate-button")
+                .addEventListener("click", (e) => {
+                  e.stopPropagation();
+                  showManualGeoModal(item);
+                });
+            }
+            targetList.appendChild(listItem);
+          });
         }
 
         async function processFiles(files) {
-          let geolocatedCount = 0;
-          let unlocatedCount = 0;
           for (const file of files) {
             if (!file.type.startsWith("image/")) continue;
-
+            const now = new Date();
+            const dd = String(now.getDate()).padStart(2, "0"),
+              mm = String(now.getMonth() + 1).padStart(2, "0"),
+              yyyy = now.getFullYear();
             const newItem = {
               id: Date.now() + Math.random(),
               type: "image",
               title: file.name,
-              notes: "",
-              original_path: file.name,
-              datetime: "N/A",
-              model: "N/A",
-              thumbnail_rel_path: await createThumbnail(file),
+              isLocated: false,
               latitude: null,
               longitude: null,
-              isLocated: false,
+              notes: "",
+              tags: [],
+              date: `${dd}/${mm}/${yyyy}`,
+              time: now.toTimeString().split(" ")[0],
+              model: "N/A",
+              thumbnail_rel_path: await createThumbnail(file),
             };
-
             try {
               const tags = await getExifData(file);
               const gps = getGpsData(tags);
+              const exifDateStr = (tags.DateTimeOriginal || "")
+                .replace(/:/g, "/")
+                .replace(" ", "/");
+              const exifDate =
+                exifDateStr && !isNaN(new Date(exifDateStr).getTime())
+                  ? new Date(exifDateStr)
+                  : now;
+              const edd = String(exifDate.getDate()).padStart(2, "0"),
+                emm = String(exifDate.getMonth() + 1).padStart(2, "0"),
+                eyyyy = exifDate.getFullYear();
               newItem.latitude = gps.lat;
               newItem.longitude = gps.lon;
-              newItem.datetime = tags.DateTimeOriginal || "N/A";
+              newItem.date = `${edd}/${emm}/${eyyyy}`;
+              newItem.time = exifDate.toTimeString().split(" ")[0];
               newItem.model = tags.Model || "N/A";
               newItem.isLocated = true;
-              geolocatedCount++;
               currentImageData.push(newItem);
             } catch (error) {
-              unlocatedCount++;
               currentImageData.push(newItem);
               showManualGeoModal(newItem);
             }
           }
-          let message = `Processed ${files.length} file(s). `;
-          if (geolocatedCount > 0) message += `${geolocatedCount} geolocated. `;
-          if (unlocatedCount > 0)
-            message += `${unlocatedCount} need manual placement.`;
-          displayMessage(message, "info");
           updateUI();
         }
 
@@ -1072,607 +1639,53 @@
           ui.manualGeoModal.style.display = "flex";
         }
 
-        function updateUI() {
-          const filterTerm = ui.filterInput.value.toLowerCase();
-          const filteredData = currentImageData.filter((item) => {
-            if (!filterTerm) return true;
-            return (
-              item.title.toLowerCase().includes(filterTerm) ||
-              (item.notes && item.notes.toLowerCase().includes(filterTerm)) ||
-              (item.datetime &&
-                item.datetime.toLowerCase().includes(filterTerm)) ||
-              (item.model && item.model.toLowerCase().includes(filterTerm))
-            );
+        function generateReportHTML() {
+          let body = `<h1>Investigation Report</h1><h2>General Case Notes</h2><p>${ui.generalNotes.value.replace(
+            /\n/g,
+            "<br>"
+          )}</p><hr><h2>Items (${currentImageData.length})</h2>`;
+          currentImageData.forEach((item) => {
+            body += `<div class="item"><h3>${item.title} (${item.type})</h3>`;
+            if (item.type === "image" && item.thumbnail_rel_path)
+              body += `<img src="${item.thumbnail_rel_path}" width="200"><br>`;
+            body += `<strong>Date/Time:</strong> ${item.date || "N/A"} ${
+              item.time || "N/A"
+            }<br>`;
+            if (item.isLocated)
+              body += `<strong>Location:</strong> ${item.latitude.toFixed(
+                6
+              )}, ${item.longitude.toFixed(6)}<br>`;
+            if (item.tags && item.tags.length > 0)
+              body += `<strong>Tags:</strong> ${item.tags.join(", ")}<br>`;
+            if (item.notes)
+              body += `<strong>Notes:</strong><p>${item.notes.replace(
+                /\n/g,
+                "<br>"
+              )}</p>`;
+            body += `</div><hr>`;
           });
-          populateMap(filteredData);
-          populateSidebar(filteredData);
-          populateConnectionsList();
-          if (filterTerm) {
-            ui.filterResultsCount.textContent = `Showing ${filteredData.length} of ${currentImageData.length} items.`;
-          } else {
-            ui.filterResultsCount.textContent = `Total items: ${currentImageData.length}`;
-          }
-        }
-
-        function populateMap(imageData) {
-          markersLayer.clearLayers();
-
-          const geolocated = imageData.filter(
-            (item) => item.latitude !== null && item.longitude !== null
-          );
-          geolocated.forEach((item) => {
-            let popupContent = `<b>${item.title}</b><br><small>Click pin for details</small><hr>`;
-            if (item.type === "image") {
-              popupContent += `<img src="${item.thumbnail_rel_path}" alt="Thumbnail">`;
-            } else {
-              popupContent += `<div class="text-icon-popup">T</div>`;
-            }
-
-            const marker = L.marker([item.latitude, item.longitude], {
-              draggable: true,
-            }).bindPopup(popupContent);
-
-            marker.itemId = item.id; // Associate marker with item id
-
-            marker.on("click", (e) => {
-              L.DomEvent.stopPropagation(e);
-              if (connectionPendingPlacement.active) {
-                handleConnectionMarkerClick(item.id);
-              } else {
-                selectItem(item.id);
-              }
-            });
-
-            marker.on("drag", (e) => {
-              const newPos = e.target.getLatLng();
-              updateConnectionLineVisuals(null, item.id, newPos);
-              if (item.tooltip) {
-                item.tooltip.setLatLng(newPos);
-              }
-            });
-
-            marker.on("dragend", function (event) {
-              const marker = event.target;
-              const newPos = marker.getLatLng();
-              item.latitude = newPos.lat;
-              item.longitude = newPos.lng;
-              displayMessage(`Updated location for ${item.title}.`, "info");
-            });
-
-            item.marker = marker;
-            markersLayer.addLayer(marker);
-          });
-          updateThumbnailView(); // To re-add thumbnails if active
-        }
-
-        function updateThumbnailView() {
-          thumbnailLayer.clearLayers();
-          if (!isThumbnailViewActive) return;
-
-          const geolocated = currentImageData.filter((item) => item.isLocated);
-          geolocated.forEach((item) => {
-            let content;
-            if (item.type === "image") {
-              content = `<img src="${item.thumbnail_rel_path}" alt="thumb">`;
-            } else {
-              content = `<div class="text-icon-map">T</div>`;
-            }
-            const tooltip = L.tooltip({
-              permanent: true,
-              direction: "center",
-              className: "thumbnail-tooltip",
-            })
-              .setLatLng([item.latitude, item.longitude])
-              .setContent(content);
-            item.tooltip = tooltip;
-            thumbnailLayer.addLayer(tooltip);
-          });
-          thumbnailLayer.addTo(map);
-        }
-
-        function populateSidebar(imageData) {
-          ui.geolocatedList.innerHTML = "";
-          ui.unlocatedList.innerHTML = "";
-
-          imageData.forEach((item) => {
-            const listItem = document.createElement("div");
-            listItem.className = "image-list-item";
-            listItem.dataset.itemId = String(item.id);
-            const displayTitle = item.title;
-
-            let iconHtml;
-            if (item.type === "image") {
-              iconHtml = `<img src="${item.thumbnail_rel_path}" alt="thumb">`;
-            } else {
-              iconHtml = `<div class="text-icon">T</div>`;
-            }
-
-            if (item.isLocated) {
-              listItem.innerHTML = `${iconHtml}<div class="info"><div class="filename">${displayTitle}</div><div class="details">${
-                item.datetime || ""
-              }</div></div>`;
-              listItem.addEventListener("click", (e) => {
-                e.stopPropagation();
-                selectItem(item.id);
-              });
-              if (item.id === selectedItemId)
-                listItem.classList.add("selected");
-              ui.geolocatedList.appendChild(listItem);
-            } else {
-              listItem.innerHTML = `${iconHtml}<div class="info"><div class="filename">${displayTitle}</div></div><button class="locate-button">Locate</button>`;
-              listItem
-                .querySelector(".locate-button")
-                .addEventListener("click", (e) => {
-                  e.stopPropagation();
-                  showManualGeoModal(item);
-                });
-              ui.unlocatedList.appendChild(listItem);
-            }
-          });
-        }
-
-        function populateConnectionsList() {
-          ui.connectionsList.innerHTML = "";
-          connectionsData.forEach((conn) => {
-            const item1 = currentImageData.find(
-              (item) => item.id === conn.pinIds[0]
-            );
-            const item2 = currentImageData.find(
-              (item) => item.id === conn.pinIds[1]
-            );
-            if (!item1 || !item2) return;
-
-            const listItem = document.createElement("div");
-            listItem.className = "connection-list-item";
-            listItem.dataset.connectionId = conn.id;
-
-            const label = conn.label || `${item1.title} ↔ ${item2.title}`;
-
-            listItem.innerHTML = `<div class="color-box" style="background-color: ${conn.color};"></div><div class="info">${label}</div>`;
-            listItem.addEventListener("click", () => selectConnection(conn.id));
-            if (conn.id === selectedConnectionId) {
-              listItem.classList.add("selected");
-            }
-            ui.connectionsList.appendChild(listItem);
-          });
-        }
-
-        function selectItem(itemId) {
-          if (selectedItemId && selectedItemId !== itemId)
-            saveInspectorDetails(selectedItemId);
-
-          deselectConnection();
-          selectedItemId = itemId;
-
-          const item = currentImageData.find((i) => i.id === itemId);
-          if (item) {
-            ui.inspectorPlaceholder.style.display = "none";
-            ui.inspectorDetails.style.display = "block";
-
-            if (item.type === "image") {
-              ui.detailsThumbnail.src = item.thumbnail_rel_path;
-              ui.detailsThumbnail.alt = `Thumbnail for ${item.original_path}`;
-              ui.detailsThumbnail.style.display = "block";
-              ui.detailsTextIcon.style.display = "none";
-              ui.detailsModel.closest(".inspector-group").style.display =
-                "block";
-            } else {
-              // It's a note
-              ui.detailsThumbnail.style.display = "none";
-              ui.detailsTextIcon.style.display = "flex";
-              ui.detailsModel.closest(".inspector-group").style.display =
-                "none";
-            }
-
-            ui.detailsTitle.value = item.title || "";
-            ui.detailsDatetime.value = item.datetime || "";
-            ui.detailsModel.value = item.model || "";
-            ui.detailsNotes.value = item.notes || "";
-            ui.inspector.classList.add("open");
-            ui.mainContent.style.paddingRight = "var(--inspector-width)";
-            if (item.marker) {
-              markersLayer.zoomToShowLayer(item.marker, () => {
-                item.marker.openPopup();
-              });
-            }
-          }
-          updateUI(); // To update selection in sidebar
-        }
-        function deselectAll() {
-          if (selectedItemId) {
-            saveInspectorDetails(selectedItemId);
-            selectedItemId = null;
-            ui.inspector.classList.remove("open");
-            ui.mainContent.style.paddingRight = "0";
-          }
-          updateUI();
-        }
-        function saveInspectorDetails(itemId) {
-          const item = currentImageData.find((i) => i.id === itemId);
-          if (item) {
-            item.title = ui.detailsTitle.value;
-            item.datetime = ui.detailsDatetime.value;
-            item.model = ui.detailsModel.value;
-            item.notes = ui.detailsNotes.value;
-            updateUI(); // To refresh sidebar titles
-          }
-        }
-
-        function startPinDrop(itemId, isNote = false) {
-          if (itemPendingPlacement) {
-            displayMessage("Already in pin-drop mode.", "info");
-            return;
-          }
-          if (itemId) {
-            itemPendingPlacement = currentImageData.find(
-              (item) => item.id === itemId
-            );
-          } else if (isNote) {
-            itemPendingPlacement = {
-              id: Date.now() + Math.random(),
-              type: "note",
-              title: "New Note",
-              notes: "",
-              datetime: new Date().toISOString().slice(0, 19).replace("T", " "),
-              model: "N/A",
-              latitude: null,
-              longitude: null,
-              isLocated: false,
-            };
-            currentImageData.push(itemPendingPlacement);
-          }
-
-          if (!itemPendingPlacement) return;
-          ui.map.classList.add("pin-drop-mode");
-          displayMessage(
-            "Click map to place pin. Press ESC to cancel.",
-            "info"
-          );
-          map.once("click", handlePinDrop);
-          document.addEventListener("keydown", cancelPinDropOnEsc);
-        }
-        function handlePinDrop(e) {
-          if (!itemPendingPlacement) return;
-          itemPendingPlacement.latitude = e.latlng.lat;
-          itemPendingPlacement.longitude = e.latlng.lng;
-          itemPendingPlacement.isLocated = true;
-          finishPinDrop(`Item pin placed.`);
-        }
-        function cancelPinDropOnEsc(e) {
-          if (e.key === "Escape") {
-            const isNewNote =
-              itemPendingPlacement &&
-              itemPendingPlacement.type === "note" &&
-              !itemPendingPlacement.isLocated;
-            if (isNewNote) {
-              currentImageData = currentImageData.filter(
-                (item) => item.id !== itemPendingPlacement.id
-              );
-            }
-            finishPinDrop("Pin placement cancelled.");
-          }
-        }
-        function finishPinDrop(message) {
-          ui.map.classList.remove("pin-drop-mode");
-          displayMessage(message, "info");
-          itemPendingPlacement = null;
-          map.off("click", handlePinDrop);
-          document.removeEventListener("keydown", cancelPinDropOnEsc);
-          updateUI();
-        }
-
-        function startConnectionMode() {
-          if (connectionPendingPlacement.active) {
-            finishConnectionMode(true, "Connection cancelled.");
-            return;
-          }
-          connectionPendingPlacement.active = true;
-          ui.addConnectionBtn.classList.add("active");
-          ui.map.classList.add("connection-mode");
-          displayMessage("Select the first pin to connect.", "info");
-        }
-
-        function finishConnectionMode(cancel = false, message = "") {
-          if (cancel && connectionPendingPlacement.line) {
-            connectionsLayer.removeLayer(connectionPendingPlacement.line);
-          }
-          connectionPendingPlacement.active = false;
-          connectionPendingPlacement.firstPinId = null;
-          connectionPendingPlacement.line = null;
-          connectionPendingPlacement.connectionId = null;
-          ui.addConnectionBtn.classList.remove("active");
-          ui.map.classList.remove("connection-mode");
-          if (message) displayMessage(message, "info");
-        }
-
-        function handleConnectionMarkerClick(clickedPinId) {
-          if (!connectionPendingPlacement.active) return;
-
-          if (!connectionPendingPlacement.firstPinId) {
-            connectionPendingPlacement.firstPinId = clickedPinId;
-            const firstPin = currentImageData.find(
-              (item) => item.id === clickedPinId
-            );
-            const latlng = [firstPin.latitude, firstPin.longitude];
-
-            connectionPendingPlacement.line = L.polyline([latlng, latlng], {
-              color: "#0d6efd",
-              weight: 3,
-              dashArray: "5, 10",
-            }).addTo(connectionsLayer);
-            displayMessage("Select the second pin to connect.", "info");
-          } else {
-            if (connectionPendingPlacement.firstPinId === clickedPinId) return; // Can't connect to itself
-
-            const firstPin = currentImageData.find(
-              (item) => item.id === connectionPendingPlacement.firstPinId
-            );
-            const secondPin = currentImageData.find(
-              (item) => item.id === clickedPinId
-            );
-
-            connectionPendingPlacement.line.setLatLngs([
-              [firstPin.latitude, firstPin.longitude],
-              [secondPin.latitude, secondPin.longitude],
-            ]);
-            connectionPendingPlacement.line.setStyle({ dashArray: null }); // Solid line
-
-            const newConnection = {
-              id: Date.now() + Math.random(),
-              pinIds: [firstPin.id, secondPin.id],
-              label: "",
-              notes: "",
-              color: "#0d6efd",
-              line: connectionPendingPlacement.line,
-            };
-            newConnection.line.connectionId = newConnection.id; // Link line to data
-            newConnection.line.on("click", (e) => {
-              L.DomEvent.stopPropagation(e);
-              selectConnection(newConnection.id);
-            });
-
-            connectionsData.push(newConnection);
-            updateUI();
-            finishConnectionMode(false, "Connection created.");
-          }
-        }
-
-        function handleConnectionMouseMove(e) {
-          if (
-            connectionPendingPlacement.active &&
-            connectionPendingPlacement.line
-          ) {
-            const latlngs = connectionPendingPlacement.line.getLatLngs();
-            latlngs[1] = e.latlng;
-            connectionPendingPlacement.line.setLatLngs(latlngs);
-          }
-        }
-
-        function updateConnectionLineVisuals(
-          connId,
-          movedPinId = null,
-          newPos = null
-        ) {
-          const connectionsToUpdate = connId
-            ? [connectionsData.find((c) => c.id === connId)]
-            : connectionsData;
-
-          connectionsToUpdate.forEach((conn) => {
-            if (!conn || !conn.line) return;
-
-            // Update color
-            conn.line.setStyle({ color: conn.color });
-
-            // Update position if a pin moved
-            if (movedPinId && conn.pinIds.includes(movedPinId)) {
-              const pin1 = currentImageData.find(
-                (p) => p.id === conn.pinIds[0]
-              );
-              const pin2 = currentImageData.find(
-                (p) => p.id === conn.pinIds[1]
-              );
-
-              const latlng1 =
-                pin1.id === movedPinId
-                  ? [newPos.lat, newPos.lng]
-                  : [pin1.latitude, pin1.longitude];
-              const latlng2 =
-                pin2.id === movedPinId
-                  ? [newPos.lat, newPos.lng]
-                  : [pin2.latitude, pin2.longitude];
-
-              conn.line.setLatLngs([latlng1, latlng2]);
-            }
-          });
-        }
-
-        function selectConnection(connectionId) {
-          deselectAll();
-          selectedConnectionId = connectionId;
-          const conn = connectionsData.find((c) => c.id === connectionId);
-
-          if (conn) {
-            ui.connectionInspectorPlaceholder.style.display = "none";
-            ui.connectionDetails.style.display = "block";
-            ui.connectionLabel.value = conn.label || "";
-            ui.connectionNotes.value = conn.notes || "";
-            ui.connectionColorPicker.value = conn.color || "#0d6efd";
-            ui.connectionInspector.classList.add("open");
-            ui.mainContent.style.paddingRight = "var(--inspector-width)";
-          }
-          updateUI();
-        }
-
-        function deselectConnection() {
-          if (selectedConnectionId) {
-            saveConnectionDetails(selectedConnectionId);
-            selectedConnectionId = null;
-            ui.connectionInspector.classList.remove("open");
-            ui.mainContent.style.paddingRight = "0";
-          }
-          updateUI();
-        }
-
-        function saveConnectionDetails(connectionId) {
-          const conn = connectionsData.find((c) => c.id === connectionId);
-          if (conn) {
-            conn.label = ui.connectionLabel.value;
-            conn.notes = ui.connectionNotes.value;
-            conn.color = ui.connectionColorPicker.value;
-          }
-          updateUI();
-        }
-
-        function saveSession() {
-          if (selectedItemId) saveInspectorDetails(selectedItemId);
-          if (selectedConnectionId) saveConnectionDetails(selectedConnectionId);
-
-          const sessionData = {
-            version: "1.3",
-            createdAt: new Date().toISOString(),
-            imageData: currentImageData.map(
-              ({ marker, tooltip, ...rest }) => rest
-            ),
-            connectionsData: connectionsData.map(({ line, ...rest }) => rest),
-            generalNotes: ui.generalNotes.value,
-          };
-          const dataStr = JSON.stringify(sessionData, null, 2);
-          const blob = new Blob([dataStr], { type: "application/json" });
+          const reportHTML = `<html><head><title>Dioptra Spy Report</title><style>body{font-family:sans-serif; margin: 2em;} .item{border-left: 3px solid #ccc; padding-left: 1em; margin-bottom: 2em; page-break-inside: avoid;}</style></head><body>${body}</body></html>`;
+          const blob = new Blob([reportHTML], { type: "text/html" });
           const url = URL.createObjectURL(blob);
           const a = document.createElement("a");
           a.href = url;
-          a.download = `dioptra-case-${new Date()
-            .toISOString()
-            .slice(0, 10)}.json`;
+          a.download = `dioptra-report-${Date.now()}.html`;
           a.click();
           URL.revokeObjectURL(url);
-          displayMessage("Session saved.", "info");
         }
 
-        function loadSession() {
+        function triggerFileUpload() {
           const input = document.createElement("input");
           input.type = "file";
-          input.accept = ".json";
+          input.accept = "image/*";
+          input.multiple = true;
           input.onchange = (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (event) => {
-              try {
-                const data = JSON.parse(event.target.result);
-                if (!data.imageData) throw new Error("Invalid session file.");
-                loadSessionData(data);
-                displayMessage("Session loaded.", "info");
-              } catch (err) {
-                displayMessage(`Error reading file: ${err.message}`, "error");
-              }
-            };
-            reader.readAsText(file);
+            if (e.target.files.length > 0) processFiles(e.target.files);
           };
           input.click();
         }
-
-        function loadSessionData(sessionData) {
-          currentImageData = sessionData.imageData || [];
-          connectionsData = sessionData.connectionsData || [];
-          ui.generalNotes.value = sessionData.generalNotes || "";
-          ui.filterInput.value = "";
-
-          // Recreate Leaflet line objects
-          connectionsData.forEach((conn) => {
-            const pin1 = currentImageData.find((p) => p.id === conn.pinIds[0]);
-            const pin2 = currentImageData.find((p) => p.id === conn.pinIds[1]);
-            if (pin1 && pin2) {
-              const line = L.polyline(
-                [
-                  [pin1.latitude, pin1.longitude],
-                  [pin2.latitude, pin2.longitude],
-                ],
-                { color: conn.color, weight: 3 }
-              ).addTo(connectionsLayer);
-              line.connectionId = conn.id;
-              line.on("click", (e) => {
-                L.DomEvent.stopPropagation(e);
-                selectConnection(conn.id);
-              });
-              conn.line = line;
-            }
-          });
-
-          deselectAll();
-          deselectConnection();
-          updateUI();
-        }
-
-        async function loadInitialData() {
-          try {
-            const response = await fetch("output/data.json");
-            if (response.ok) {
-              const data = await response.json();
-              const initialImageData = data.map((item) => ({
-                ...item,
-                id: Date.now() + Math.random(),
-                type: "image",
-                title: item.original_path.split(/[\\/]/).pop(),
-                notes: "",
-                isLocated: true,
-              }));
-              loadSessionData({ imageData: initialImageData });
-            } else {
-              throw new Error("No initial data file.");
-            }
-          } catch (error) {
-            displayMessage(
-              "Ready. Drag images or load a session file.",
-              "info"
-            );
-          }
-        }
-
-        function displayMessage(message, type = "info", duration = 4000) {
-          const existingMsg = document.querySelector(".user-message");
-          if (existingMsg) existingMsg.remove();
-          const msgDiv = document.createElement("div");
-          msgDiv.className = `user-message ${type}`;
-          msgDiv.innerHTML = message;
-          ui.mainContent.appendChild(msgDiv);
-          setTimeout(() => {
-            if (msgDiv) msgDiv.remove();
-          }, duration);
-        }
-
-        function getExifData(file) {
-          return new Promise((resolve, reject) => {
-            EXIF.getData(file, function () {
-              const tags = EXIF.getAllTags(this);
-              if (Object.keys(tags).length === 0) {
-                reject(new Error("No EXIF data."));
-              } else {
-                resolve(tags);
-              }
-            });
-          });
-        }
-        function getGpsData(tags) {
-          if (!tags.GPSLatitude || !tags.GPSLongitude) {
-            throw new Error("GPS data not found.");
-          }
-          const latRef = tags.GPSLatitudeRef || "N";
-          const lonRef = tags.GPSLongitudeRef || "E";
-          const lat =
-            (tags.GPSLatitude[0] +
-              tags.GPSLatitude[1] / 60 +
-              tags.GPSLatitude[2] / 3600) *
-            (latRef === "S" ? -1 : 1);
-          const lon =
-            (tags.GPSLongitude[0] +
-              tags.GPSLongitude[1] / 60 +
-              tags.GPSLongitude[2] / 3600) *
-            (lonRef === "W" ? -1 : 1);
-          return { lat, lon };
-        }
-        function createThumbnail(file, maxWidth = 200, maxHeight = 200) {
-          return new Promise((resolve, reject) => {
+        function createThumbnail(file, maxWidth = 400, maxHeight = 400) {
+          return new Promise((resolve) => {
             const reader = new FileReader();
             reader.onload = (e) => {
               const img = new Image();
@@ -1695,12 +1708,238 @@
                 canvas.getContext("2d").drawImage(img, 0, 0, width, height);
                 resolve(canvas.toDataURL("image/jpeg"));
               };
-              img.onerror = reject;
               img.src = e.target.result;
             };
-            reader.onerror = reject;
             reader.readAsDataURL(file);
           });
+        }
+        function getExifData(file) {
+          return new Promise((resolve, reject) => {
+            EXIF.getData(file, function () {
+              const tags = EXIF.getAllTags(this);
+              if (!tags || Object.keys(tags).length === 0)
+                reject(new Error("No EXIF data."));
+              else resolve(tags);
+            });
+          });
+        }
+        function getGpsData(tags) {
+          if (!tags.GPSLatitude || !tags.GPSLongitude)
+            throw new Error("GPS data not found.");
+          const latRef = tags.GPSLatitudeRef || "N";
+          const lonRef = tags.GPSLongitudeRef || "E";
+          const lat =
+            (tags.GPSLatitude[0] +
+              tags.GPSLatitude[1] / 60 +
+              tags.GPSLatitude[2] / 3600) *
+            (latRef === "S" ? -1 : 1);
+          const lon =
+            (tags.GPSLongitude[0] +
+              tags.GPSLongitude[1] / 60 +
+              tags.GPSLongitude[2] / 3600) *
+            (lonRef === "W" ? -1 : 1);
+          return { lat, lon };
+        }
+        function saveSession() {
+          if (selectedItemId) saveInspectorDetails(selectedItemId);
+          if (selectedConnectionId) saveConnectionDetails(selectedConnectionId);
+          if (selectedToolId) saveToolDetails(selectedToolId);
+          const sessionData = {
+            version: "1.7",
+            createdAt: new Date().toISOString(),
+            imageData: currentImageData.map(
+              ({ marker, tooltip, ...rest }) => rest
+            ),
+            connectionsData: connectionsData.map(({ line, ...rest }) => ({
+              ...rest,
+              endpoints: rest.endpoints.map((e) =>
+                e.type === "coordinate"
+                  ? {
+                      type: "coordinate",
+                      latlng: { lat: e.latlng.lat, lng: e.latlng.lng },
+                    }
+                  : e
+              ),
+            })),
+            measureToolsData: measureToolsData.map(
+              ({ line, markers, ...rest }) => ({
+                ...rest,
+                points: rest.points.map((p) => ({ lat: p.lat, lng: p.lng })),
+              })
+            ),
+            rangeToolsData: rangeToolsData.map(
+              ({ layer, circle, marker, ...rest }) => ({
+                ...rest,
+                center: { lat: rest.center.lat, lng: rest.center.lng },
+              })
+            ),
+            generalNotes: ui.generalNotes.value,
+          };
+          const dataStr = JSON.stringify(sessionData, null, 2);
+          const blob = new Blob([dataStr], { type: "application/json" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `dioptra-case-${new Date()
+            .toISOString()
+            .slice(0, 10)}.json`;
+          a.click();
+          URL.revokeObjectURL(url);
+          displayMessage("Session saved.", "info");
+        }
+        function loadSession() {
+          const input = document.createElement("input");
+          input.type = "file";
+          input.accept = ".json";
+          input.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+              try {
+                const data = JSON.parse(event.target.result);
+                if (!data.imageData) throw new Error("Invalid session file.");
+                loadSessionData(data);
+                displayMessage("Session loaded.", "info");
+              } catch (err) {
+                displayMessage(`Error reading file: ${err.message}`, "error");
+              }
+            };
+            reader.readAsText(file);
+          };
+          input.click();
+        }
+        function loadSessionData(sessionData) {
+          currentImageData = sessionData.imageData || [];
+          connectionsData = sessionData.connectionsData || [];
+          measureToolsData = sessionData.measureToolsData || [];
+          rangeToolsData = sessionData.rangeToolsData || [];
+          ui.generalNotes.value = sessionData.generalNotes || "";
+          ui.filterInput.value = "";
+          connectionsLayer.clearLayers();
+          toolsLayer.clearLayers();
+          connectionsData.forEach((conn) => {
+            const latlngs = conn.endpoints
+              .map((e) => {
+                if (e.type === "pin") {
+                  const item = currentImageData.find((i) => i.id === e.id);
+                  return item ? L.latLng(item.latitude, item.longitude) : null;
+                }
+                return L.latLng(e.latlng.lat, e.latlng.lng);
+              })
+              .filter(Boolean);
+            if (latlngs.length === 2) {
+              const line = L.polyline(latlngs, {
+                color: conn.color,
+                weight: 6,
+              }).addTo(connectionsLayer);
+              line.connectionId = conn.id;
+              line.on("click", (e) => {
+                L.DomEvent.stopPropagation(e);
+                selectConnection(conn.id);
+              });
+              conn.line = line;
+            }
+          });
+          measureToolsData.forEach((tool) => {
+            tool.points = tool.points.map((p) => L.latLng(p.lat, p.lng));
+            tool.line = L.polyline(tool.points, { color: "red" }).addTo(
+              toolsLayer
+            );
+            tool.markers = tool.points.map((p) =>
+              L.circleMarker(p, { radius: 5, color: "red" }).addTo(toolsLayer)
+            );
+            addInteractionToMeasureTool(tool);
+          });
+          rangeToolsData.forEach((tool) => {
+            tool.center = L.latLng(tool.center.lat, tool.center.lng);
+            tool.circle = L.circle(tool.center, {
+              radius: tool.radius,
+              color: "blue",
+              fillOpacity: 0.1,
+            });
+            tool.marker = L.marker(tool.center, { draggable: true });
+            tool.layer = L.layerGroup([tool.circle, tool.marker]).addTo(
+              toolsLayer
+            );
+            addInteractionToRangeTool(tool);
+          });
+          deselectAll();
+          updateUI();
+        }
+        function deselectAll(silent = false) {
+          if (selectedItemId) {
+            if (!silent) saveInspectorDetails(selectedItemId);
+            selectedItemId = null;
+          }
+          if (selectedConnectionId) {
+            if (!silent) saveConnectionDetails(selectedConnectionId);
+            selectedConnectionId = null;
+          }
+          if (selectedToolId) {
+            if (!silent) saveToolDetails(selectedToolId);
+            selectedToolId = null;
+          }
+          ui.inspector.classList.remove("open");
+          ui.inspectorItemDetails.style.display = "none";
+          ui.inspectorConnectionDetails.style.display = "none";
+          ui.inspectorToolDetails.style.display = "none";
+          ui.inspectorPlaceholder.style.display = "block";
+          updateUI();
+        }
+        function selectConnection(id) {
+          deselectAll(true);
+          selectedConnectionId = id;
+          const conn = connectionsData.find((c) => c.id === id);
+          if (conn) {
+            ui.inspector.classList.add("open");
+            ui.inspectorPlaceholder.style.display = "none";
+            ui.inspectorConnectionDetails.style.display = "block";
+            ui.connectionLabel.value = conn.label || "";
+            ui.connectionNotes.value = conn.notes || "";
+            ui.connectionColorPicker.value = conn.color || "#FF0000";
+          }
+          updateUI();
+        }
+        function saveConnectionDetails(id) {
+          const conn = connectionsData.find((c) => c.id === id);
+          if (conn) {
+            conn.label = ui.connectionLabel.value;
+            conn.notes = ui.connectionNotes.value;
+            conn.color = ui.connectionColorPicker.value;
+            updateConnectionLineVisuals(id);
+            updateUI();
+          }
+        }
+        function selectTool(id) {
+          deselectAll(true);
+          selectedToolId = id;
+          let tool =
+            measureToolsData.find((t) => t.id === id) ||
+            rangeToolsData.find((t) => t.id === id);
+          if (tool) {
+            ui.inspector.classList.add("open");
+            ui.inspectorPlaceholder.style.display = "none";
+            ui.inspectorToolDetails.style.display = "block";
+            if (tool.type === "measure") {
+              ui.toolMeasureInfo.style.display = "block";
+              ui.toolRangeInfo.style.display = "none";
+              ui.toolMeasureDistance.value =
+                calculateDistance(tool.points) + " km";
+            } else {
+              ui.toolMeasureInfo.style.display = "none";
+              ui.toolRangeInfo.style.display = "block";
+              ui.toolRangeRadius.value = (tool.radius / 1000).toFixed(2);
+            }
+          }
+          updateUI();
+        }
+        function saveToolDetails(id) {
+          let tool = rangeToolsData.find((t) => t.id === id);
+          if (tool) {
+            tool.radius = parseFloat(ui.toolRangeRadius.value) * 1000;
+            tool.circle.setRadius(tool.radius);
+          }
         }
         function toggleThumbnailView() {
           isThumbnailViewActive = !isThumbnailViewActive;
@@ -1708,12 +1947,128 @@
             "active",
             isThumbnailViewActive
           );
-          updateThumbnailView();
+          if (isThumbnailViewActive) map.addLayer(thumbnailLayer);
+          else map.removeLayer(thumbnailLayer);
         }
-
-        // --- Kick everything off ---
-        setupSidebarHTML();
-        loadInitialData();
+        function updateThumbnailView() {
+          thumbnailLayer.clearLayers();
+          if (!isThumbnailViewActive) return;
+          currentImageData
+            .filter((item) => item.isLocated)
+            .forEach((item) => {
+              let content;
+              if (item.type === "image")
+                content = `<img src="${item.thumbnail_rel_path}" alt="thumb">`;
+              else
+                content = `<div class="item-icon-map"><span class="material-symbols-outlined">${
+                  { note: "note", person: "person", vehicle: "directions_car" }[
+                    item.type
+                  ]
+                }</span></div>`;
+              const tooltip = L.tooltip({
+                permanent: true,
+                direction: "center",
+                className: "thumbnail-tooltip",
+              })
+                .setLatLng([item.latitude, item.longitude])
+                .setContent(content);
+              item.tooltip = tooltip;
+              thumbnailLayer.addLayer(tooltip);
+            });
+        }
+        function setupCollapsibleSections() {
+          const savedState =
+            JSON.parse(localStorage.getItem("dioptraSidebarState")) || {};
+          ui.sidebar.addEventListener("click", (e) => {
+            const header = e.target.closest(".collapsible-header");
+            if (header) {
+              const section = header.closest(".sidebar-section.collapsible");
+              if (section) {
+                section.classList.toggle("collapsed");
+                savedState[section.id] =
+                  section.classList.contains("collapsed");
+                localStorage.setItem(
+                  "dioptraSidebarState",
+                  JSON.stringify(savedState)
+                );
+              }
+            }
+          });
+          document
+            .querySelectorAll(".sidebar-section.collapsible")
+            .forEach((section) => {
+              if (savedState[section.id] === true)
+                section.classList.add("collapsed");
+            });
+        }
+        function populateConnectionsList() {
+          ui.connectionsList.innerHTML = "";
+          connectionsData.forEach((conn) => {
+            const listItem = document.createElement("div");
+            listItem.className = "list-item";
+            if (conn.id === selectedConnectionId)
+              listItem.classList.add("selected");
+            const label =
+              conn.label || `Connection #${String(conn.id).slice(-4)}`;
+            listItem.innerHTML = `<div class="color-box" style="background-color: ${conn.color};"></div><div class="info">${label}</div>`;
+            listItem.addEventListener("click", () => selectConnection(conn.id));
+            ui.connectionsList.appendChild(listItem);
+          });
+        }
+        function loadInitialData() {
+          fetch("output/data.json")
+            .then((response) => {
+              if (response.ok) return response.json();
+              else return Promise.resolve([]);
+            })
+            .then((data) => {
+              if (data && data.length > 0) {
+                const initialImageData = data.map((item) => {
+                  const now = new Date();
+                  const dd = String(now.getDate()).padStart(2, "0"),
+                    mm = String(now.getMonth() + 1).padStart(2, "0"),
+                    yyyy = now.getFullYear();
+                  const dt = item.datetime ? item.datetime.split(" ") : [];
+                  const date = dt[0]
+                    ? dt[0].replace(/:/g, "/")
+                    : `${dd}/${mm}/${yyyy}`;
+                  const time = dt[1] || now.toTimeString().split(" ")[0];
+                  return {
+                    ...item,
+                    id: Date.now() + Math.random(),
+                    type: "image",
+                    title: item.original_path.split(/[\\/]/).pop(),
+                    notes: "",
+                    tags: [],
+                    date,
+                    time,
+                    isLocated: true,
+                  };
+                });
+                loadSessionData({ imageData: initialImageData });
+                displayMessage(`${data.length} initial items loaded.`, "info");
+              } else {
+                displayMessage(
+                  "Ready. Add items or load a session file.",
+                  "info"
+                );
+              }
+            })
+            .catch(() =>
+              displayMessage("Ready. Add items or load a session file.", "info")
+            );
+        }
+        function displayMessage(message, type = "info", duration = 4000) {
+          const existingMsg = document.querySelector(".user-message");
+          if (existingMsg) existingMsg.remove();
+          const msgDiv = document.createElement("div");
+          msgDiv.className = `user-message ${type}`;
+          msgDiv.innerHTML = message;
+          ui.mainContent.appendChild(msgDiv);
+          setTimeout(() => {
+            if (msgDiv.parentElement) msgDiv.remove();
+          }, duration);
+        }
       });
     </script>
   </body>
