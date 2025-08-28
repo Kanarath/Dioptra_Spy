@@ -1,0 +1,34 @@
+{
+  "name": "dioptra-spy",
+  "version": "1.0.0",
+  "description": "An OSINT geo-investigation tool.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "author": "Gerard Montero Sellares",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  },
+  "build": {
+    "appId": "com.example.dioptraspy",
+    "productName": "DioptraSpy",
+    "files": [
+      "dioptra-spy.html",
+      "main.js",
+      "output/**/*"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
+  }
+}
