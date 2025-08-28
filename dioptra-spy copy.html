@@ -878,14 +878,17 @@
                 if (selectedToolId) saveToolDetails(selectedToolId);
               };
               if (
-                element.id === "details-latitude" ||
-                element.id === "details-longitude"
+                element.id !== "details-latitude" &&
+                element.id !== "details-longitude"
               ) {
-                element.addEventListener("change", handleCoordinateChange);
-              } else {
                 element.addEventListener("input", handler);
               }
             });
+          ui.detailsLatitude.addEventListener("change", handleCoordinateChange);
+          ui.detailsLongitude.addEventListener(
+            "change",
+            handleCoordinateChange
+          );
 
           ui.deleteItemBtn.addEventListener("click", () => {
             if (
@@ -1497,7 +1500,15 @@
             ui.detailsLongitude.value = item.isLocated
               ? item.longitude.toFixed(6)
               : "";
-            if (item.marker) item.marker.openPopup();
+            if (item.marker) {
+              map.flyTo(
+                [item.latitude, item.longitude],
+                map.getZoom() < 16 ? 16 : map.getZoom()
+              );
+              setTimeout(() => {
+                item.marker.openPopup();
+              }, 400);
+            }
           }
           updateUI();
         }
@@ -1912,7 +1923,11 @@
               toolsLayer
             );
             tool.markers = tool.points.map((p) =>
-              L.circleMarker(p, { radius: 5, color: "red" }).addTo(toolsLayer)
+              L.circleMarker(p, {
+                radius: 5,
+                color: "red",
+                draggable: true,
+              }).addTo(toolsLayer)
             );
             addInteractionToMeasureTool(tool);
           });

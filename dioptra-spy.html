@@ -623,6 +623,10 @@
 
         <div id="inspector-tool-details" style="display: none">
           <h3>Tool Details</h3>
+          <div class="inspector-group">
+            <label for="tool-label">Label</label
+            ><input type="text" id="tool-label" />
+          </div>
           <div id="tool-measure-info">
             <div class="inspector-group">
               <label>Total Distance</label
@@ -635,17 +639,17 @@
               ><input type="number" id="tool-range-radius" step="0.1" />
             </div>
             <div class="inspector-group">
-              <label for="tool-range-notes">Notes</label
-              ><textarea id="tool-range-notes"></textarea>
-            </div>
-            <div class="inspector-group">
-              <label for="tool-range-tags">Tags (comma-separated)</label
-              ><input type="text" id="tool-range-tags" />
-            </div>
-            <div class="inspector-group">
               <label for="tool-range-color">Color</label
               ><input type="color" id="tool-range-color" />
             </div>
+          </div>
+          <div class="inspector-group">
+            <label for="tool-notes">Notes</label
+            ><textarea id="tool-notes"></textarea>
+          </div>
+          <div class="inspector-group">
+            <label for="tool-tags">Tags (comma-separated)</label
+            ><input type="text" id="tool-tags" />
           </div>
           <button
             class="action-button danger"
@@ -707,8 +711,7 @@
           line: null,
         };
         let connectionsData = [];
-        let measureToolsData = [];
-        let rangeToolsData = [];
+        let toolsData = [];
 
         let selectedItemId = null;
         let selectedConnectionId = null;
@@ -771,6 +774,7 @@
           ),
           deleteConnectionBtn: document.getElementById("delete-connection-btn"),
 
+          toolLabel: document.getElementById("tool-label"),
           toolMeasureInfo: document.getElementById("tool-measure-info"),
           toolMeasureDistance: document.getElementById("tool-measure-distance"),
           toolRangeInfo: document.getElementById("tool-range-info"),
@@ -778,6 +782,8 @@
           toolRangeNotes: document.getElementById("tool-range-notes"),
           toolRangeTags: document.getElementById("tool-range-tags"),
           toolRangeColor: document.getElementById("tool-range-color"),
+          toolNotes: document.getElementById("tool-notes"),
+          toolTags: document.getElementById("tool-tags"),
           deleteToolBtn: document.getElementById("delete-tool-btn"),
 
           manualGeoModal: document.getElementById("manual-geo-modal"),
@@ -1064,35 +1070,23 @@
             const newMeasureTool = {
               id: Date.now() + Math.random(),
               type: "measure",
+              label: "New Measurement",
               points: [...measureState.points],
               line: measureState.line,
               markers: measureState.markers,
             };
-            measureToolsData.push(newMeasureTool);
+            toolsData.push(newMeasureTool);
             addInteractionToMeasureTool(newMeasureTool);
             clearMeasureTool(true);
             displayMessage("Measurement saved.", "info");
             toggleTool("measure");
+            updateUI();
           });
         }
 
         function addInteractionToMeasureTool(tool) {
           tool.markers.forEach((marker, index) => {
             marker.setZIndexOffset(1000);
-            marker.options.draggable = true;
-            marker.on("drag", () => {
-              tool.points[index] = marker.getLatLng();
-              tool.line.setLatLngs(tool.points);
-              const popupContent = `Distance: ${calculateDistance(
-                tool.points
-              )} km`;
-              tool.markers[tool.markers.length - 1]
-                .setPopupContent(popupContent)
-                .openPopup();
-              if (selectedToolId === tool.id)
-                ui.toolMeasureDistance.value =
-                  calculateDistance(tool.points) + " km";
-            });
           });
           tool.line.on("click", (e) => {
             L.DomEvent.stop(e);
@@ -1124,6 +1118,7 @@
             const newRangeTool = {
               id: Date.now() + Math.random(),
               type: "range",
+              label: "New Range",
               center: latlng,
               radius: radiusKm * 1000,
               notes: "",
@@ -1141,9 +1136,10 @@
             );
             newRangeTool.circle = circle;
             newRangeTool.marker = marker;
-            rangeToolsData.push(newRangeTool);
+            toolsData.push(newRangeTool);
             addInteractionToRangeTool(newRangeTool);
             displayMessage("Range tool created.", "info");
+            updateUI();
           } else if (radiusKm !== null) {
             alert("Invalid radius.");
           }
@@ -1193,16 +1189,14 @@
         }
 
         function deleteTool(toolId) {
-          let tool = measureToolsData.find((t) => t.id === toolId);
-          if (tool) {
-            toolsLayer.removeLayer(tool.line);
-            tool.markers.forEach((m) => toolsLayer.removeLayer(m));
-            measureToolsData = measureToolsData.filter((t) => t.id !== toolId);
-          }
-          tool = rangeToolsData.find((t) => t.id === toolId);
-          if (tool) {
-            toolsLayer.removeLayer(tool.layer);
-            rangeToolsData = rangeToolsData.filter((t) => t.id !== toolId);
+          const toolIndex = toolsData.findIndex((t) => t.id === toolId);
+          if (toolIndex > -1) {
+            const tool = toolsData[toolIndex];
+            if (tool.layer) toolsLayer.removeLayer(tool.layer); // Range tool
+            if (tool.line) toolsLayer.removeLayer(tool.line); // Measure tool
+            if (tool.markers)
+              tool.markers.forEach((m) => toolsLayer.removeLayer(m));
+            toolsData.splice(toolIndex, 1);
           }
           deselectAll();
           updateUI();
@@ -1506,7 +1500,7 @@
                 map.getZoom() < 16 ? 16 : map.getZoom()
               );
               setTimeout(() => {
-                item.marker.openPopup();
+                if (item.marker) item.marker.openPopup();
               }, 400);
             }
           }
@@ -1563,7 +1557,7 @@
         }
 
         function setupSidebarHTML() {
-          ui.sidebar.innerHTML = `<div class="sidebar-section"><input type="text" id="filter-input" placeholder="Filter by text or #tag"><div id="filter-results-count"></div></div><div class="sidebar-section collapsible" id="geolocated-section"><div class="collapsible-header"><h3>Geolocated Items</h3><span class="collapse-icon material-symbols-outlined">expand_less</span></div><div class="collapsible-content"><div id="geolocated-list" class="list-container"></div></div></div><div class="sidebar-section collapsible" id="unlocated-section"><div class="collapsible-header"><h3>Unlocated Items</h3><span class="collapse-icon material-symbols-outlined">expand_less</span></div><div class="collapsible-content"><div id="unlocated-list" class="list-container"></div></div></div><div class="sidebar-section collapsible" id="connections-section"><div class="collapsible-header"><h3>Connections</h3><span class="collapse-icon material-symbols-outlined">expand_less</span></div><div class="collapsible-content"><div id="connections-list" class="list-container"></div></div></div><div class="sidebar-section collapsible" id="general-notes-section" style="flex-grow: 1; display: flex; flex-direction: column;"><div class="collapsible-header"><h3>General Case Notes</h3><span class="collapse-icon material-symbols-outlined">expand_less</span></div><div class="collapsible-content" style="flex-grow: 1; display: flex; flex-direction: column;"><textarea id="general-notes" style="flex-grow:1;"></textarea></div></div>`;
+          ui.sidebar.innerHTML = `<div class="sidebar-section"><input type="text" id="filter-input" placeholder="Filter by text or #tag"><div id="filter-results-count"></div></div><div class="sidebar-section collapsible" id="geolocated-section"><div class="collapsible-header"><h3>Geolocated Items</h3><span class="collapse-icon material-symbols-outlined">expand_less</span></div><div class="collapsible-content"><div id="geolocated-list" class="list-container"></div></div></div><div class="sidebar-section collapsible" id="unlocated-section"><div class="collapsible-header"><h3>Unlocated Items</h3><span class="collapse-icon material-symbols-outlined">expand_less</span></div><div class="collapsible-content"><div id="unlocated-list" class="list-container"></div></div></div><div class="sidebar-section collapsible" id="connections-section"><div class="collapsible-header"><h3>Connections</h3><span class="collapse-icon material-symbols-outlined">expand_less</span></div><div class="collapsible-content"><div id="connections-list" class="list-container"></div></div></div><div class="sidebar-section collapsible" id="tools-section"><div class="collapsible-header"><h3>Tools</h3><span class="collapse-icon material-symbols-outlined">expand_less</span></div><div class="collapsible-content"><div id="tools-list" class="list-container"></div></div></div><div class="sidebar-section collapsible" id="general-notes-section" style="flex-grow: 1; display: flex; flex-direction: column;"><div class="collapsible-header"><h3>General Case Notes</h3><span class="collapse-icon material-symbols-outlined">expand_less</span></div><div class="collapsible-content" style="flex-grow: 1; display: flex; flex-direction: column;"><textarea id="general-notes" style="flex-grow:1;"></textarea></div></div>`;
           ui.filterInput = document.getElementById("filter-input");
           ui.filterResultsCount = document.getElementById(
             "filter-results-count"
@@ -1571,6 +1565,7 @@
           ui.geolocatedList = document.getElementById("geolocated-list");
           ui.unlocatedList = document.getElementById("unlocated-list");
           ui.connectionsList = document.getElementById("connections-list");
+          ui.toolsList = document.getElementById("tools-list");
           ui.generalNotes = document.getElementById("general-notes");
           ui.filterInput.addEventListener("input", () => updateUI());
           setupCollapsibleSections();
@@ -1596,7 +1591,6 @@
               item.notes,
               item.date,
               item.time,
-              item.model,
               item.vehicleType,
             ]
               .join(" ")
@@ -1606,6 +1600,7 @@
           populateMap(filteredData);
           populateSidebar(allData);
           populateConnectionsList();
+          populateToolsList();
           if (filterTerm)
             ui.filterResultsCount.textContent = `Showing ${filteredData.length} of ${currentImageData.length} items.`;
           else
@@ -1821,7 +1816,7 @@
           if (selectedConnectionId) saveConnectionDetails(selectedConnectionId);
           if (selectedToolId) saveToolDetails(selectedToolId);
           const sessionData = {
-            version: "1.8",
+            version: "1.9",
             createdAt: new Date().toISOString(),
             imageData: currentImageData.map(
               ({ marker, tooltip, ...rest }) => rest
@@ -1837,18 +1832,23 @@
                   : e
               ),
             })),
-            measureToolsData: measureToolsData.map(
-              ({ line, markers, ...rest }) => ({
-                ...rest,
-                points: rest.points.map((p) => ({ lat: p.lat, lng: p.lng })),
-              })
-            ),
-            rangeToolsData: rangeToolsData.map(
-              ({ layer, circle, marker, ...rest }) => ({
-                ...rest,
-                center: { lat: rest.center.lat, lng: rest.center.lng },
-              })
-            ),
+            toolsData: toolsData.map((tool) => {
+              if (tool.type === "measure") {
+                const { line, markers, ...rest } = tool;
+                return {
+                  ...rest,
+                  points: rest.points.map((p) => ({ lat: p.lat, lng: p.lng })),
+                };
+              }
+              if (tool.type === "range") {
+                const { layer, circle, marker, ...rest } = tool;
+                return {
+                  ...rest,
+                  center: { lat: rest.center.lat, lng: rest.center.lng },
+                };
+              }
+              return tool;
+            }),
             generalNotes: ui.generalNotes.value,
           };
           const dataStr = JSON.stringify(sessionData, null, 2);
@@ -1888,8 +1888,7 @@
         function loadSessionData(sessionData) {
           currentImageData = sessionData.imageData || [];
           connectionsData = sessionData.connectionsData || [];
-          measureToolsData = sessionData.measureToolsData || [];
-          rangeToolsData = sessionData.rangeToolsData || [];
+          toolsData = sessionData.toolsData || [];
           ui.generalNotes.value = sessionData.generalNotes || "";
           ui.filterInput.value = "";
           connectionsLayer.clearLayers();
@@ -1917,32 +1916,30 @@
               conn.line = line;
             }
           });
-          measureToolsData.forEach((tool) => {
-            tool.points = tool.points.map((p) => L.latLng(p.lat, p.lng));
-            tool.line = L.polyline(tool.points, { color: "red" }).addTo(
-              toolsLayer
-            );
-            tool.markers = tool.points.map((p) =>
-              L.circleMarker(p, {
-                radius: 5,
-                color: "red",
-                draggable: true,
-              }).addTo(toolsLayer)
-            );
-            addInteractionToMeasureTool(tool);
-          });
-          rangeToolsData.forEach((tool) => {
-            tool.center = L.latLng(tool.center.lat, tool.center.lng);
-            tool.circle = L.circle(tool.center, {
-              radius: tool.radius,
-              color: tool.color,
-              fillOpacity: 0.1,
-            });
-            tool.marker = L.marker(tool.center, { draggable: true });
-            tool.layer = L.layerGroup([tool.circle, tool.marker]).addTo(
-              toolsLayer
-            );
-            addInteractionToRangeTool(tool);
+          toolsData.forEach((tool) => {
+            if (tool.type === "measure") {
+              tool.points = tool.points.map((p) => L.latLng(p.lat, p.lng));
+              tool.line = L.polyline(tool.points, { color: "red" }).addTo(
+                toolsLayer
+              );
+              tool.markers = tool.points.map((p) =>
+                L.circleMarker(p, { radius: 5, color: "red" }).addTo(toolsLayer)
+              );
+              addInteractionToMeasureTool(tool);
+            }
+            if (tool.type === "range") {
+              tool.center = L.latLng(tool.center.lat, tool.center.lng);
+              tool.circle = L.circle(tool.center, {
+                radius: tool.radius,
+                color: tool.color,
+                fillOpacity: 0.1,
+              });
+              tool.marker = L.marker(tool.center, { draggable: true });
+              tool.layer = L.layerGroup([tool.circle, tool.marker]).addTo(
+                toolsLayer
+              );
+              addInteractionToRangeTool(tool);
+            }
           });
           deselectAll();
           updateUI();
@@ -1996,9 +1993,7 @@
         function selectTool(id) {
           deselectAll(true);
           selectedToolId = id;
-          let tool =
-            measureToolsData.find((t) => t.id === id) ||
-            rangeToolsData.find((t) => t.id === id);
+          let tool = toolsData.find((t) => t.id === id);
           if (tool) {
             ui.inspector.classList.add("open");
             ui.inspectorPlaceholder.style.display = "none";
@@ -2018,21 +2013,28 @@
               ui.toolRangeTags.value = (tool.tags || []).join(", ");
               ui.toolRangeColor.value = tool.color || "#0000FF";
             }
+            ui.toolLabel.value = tool.label || "";
+            ui.toolNotes.value = tool.notes || "";
+            ui.toolTags.value = (tool.tags || []).join(", ");
           }
           updateUI();
         }
         function saveToolDetails(id) {
-          let tool = rangeToolsData.find((t) => t.id === id);
+          let tool = toolsData.find((t) => t.id === id);
           if (tool) {
-            tool.radius = parseFloat(ui.toolRangeRadius.value) * 1000;
-            tool.notes = ui.toolRangeNotes.value;
-            tool.tags = ui.toolRangeTags.value
+            tool.label = ui.toolLabel.value;
+            tool.notes = ui.toolNotes.value;
+            tool.tags = ui.toolTags.value
               .split(",")
               .map((t) => t.trim())
               .filter(Boolean);
-            tool.color = ui.toolRangeColor.value;
-            tool.circle.setRadius(tool.radius);
-            tool.circle.setStyle({ color: tool.color });
+            if (tool.type === "range") {
+              tool.radius = parseFloat(ui.toolRangeRadius.value) * 1000;
+              tool.color = ui.toolRangeColor.value;
+              tool.circle.setRadius(tool.radius);
+              tool.circle.setStyle({ color: tool.color });
+            }
+            updateUI();
           }
         }
         function toggleThumbnailView() {
@@ -2110,6 +2112,23 @@
             listItem.innerHTML = `<div class="color-box" style="background-color: ${conn.color};"></div><div class="info">${label}</div>`;
             listItem.addEventListener("click", () => selectConnection(conn.id));
             ui.connectionsList.appendChild(listItem);
+          });
+        }
+        function populateToolsList() {
+          ui.toolsList.innerHTML = "";
+          toolsData.forEach((tool) => {
+            const listItem = document.createElement("div");
+            listItem.className = "list-item";
+            if (tool.id === selectedToolId) listItem.classList.add("selected");
+            const icon = tool.type === "measure" ? "straighten" : "public";
+            const label =
+              tool.label ||
+              `${
+                tool.type.charAt(0).toUpperCase() + tool.type.slice(1)
+              } #${String(tool.id).slice(-4)}`;
+            listItem.innerHTML = `<div class="item-icon"><span class="material-symbols-outlined">${icon}</span></div><div class="info">${label}</div>`;
+            listItem.addEventListener("click", () => selectTool(tool.id));
+            ui.toolsList.appendChild(listItem);
           });
         }
         function loadInitialData() {
