@@ -1,0 +1,27 @@
+# Dependencias de Node.js
+/node_modules
+
+# Archivos de compilación y empaquetado de Electron
+/dist
+/release
+/build
+
+# Archivos de caché y logs de npm/yarn
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+
+# Entorno virtual de Python
+/venv
+/.venv
+
+# Archivos de caché de Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db

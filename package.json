@@ -7,19 +7,23 @@
     "start": "electron .",
     "dist": "electron-builder"
   },
-  "author": "Gerard Montero Sellares",
+  "author": "Kanarath",
   "license": "MIT",
   "devDependencies": {
-    "electron": "^28.0.0",
+    "electron": "^28.1.0",
     "electron-builder": "^24.9.1"
   },
   "build": {
-    "appId": "com.example.dioptraspy",
+    "appId": "com.github.Kanarath.Dioptra_Spy",
     "productName": "DioptraSpy",
     "files": [
       "dioptra-spy.html",
       "main.js",
-      "output/**/*"
+      "main.py",
+      "dioptra_spy/**/*",
+      "output/**/*",
+      "!venv/**/*",
+      "!input_images/**/*"
     ],
     "directories": {
       "output": "dist"
